@@ -1,0 +1,12 @@
+## Interface: 120000, 120001, 120005
+## Title: ReSpec
+## Notes: A collapsable button to change specializations
+## Author: BlueRaven
+## Version: 1.0.0
+## IconTexture: Interface/macroframe/macroframe-icon
+## SavedVariables: ReSpecDB
+
+
+ReSpecDB.lua
+ReSpec.lua
+Settings.lua
