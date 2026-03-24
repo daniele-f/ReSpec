@@ -9,7 +9,7 @@ local initialized = false
 
 local UpdateSpecs
 
-local BUTTON_SIZE = 42
+local DEFAULT_BUTTON_SIZE = 42
 local SECONDARY_SCALE = 0.92
 local BUTTON_GAP = 6
 local CHEVRON_WIDTH = 2
@@ -38,6 +38,10 @@ local function GetRightClickAction()
     return GetDB().rightClickAction or "settings"
 end
 
+local function GetButtonSize()
+    return GetDB().buttonSize or DEFAULT_BUTTON_SIZE
+end
+
 local function ComputeWidgetAlpha(isHovered)
     local db = GetDB()
 
@@ -56,19 +60,16 @@ end
 local function SavePosition(frame)
     local db = GetDB()
 
-    local left = frame:GetLeft()
-    local top = frame:GetTop()
-    if not left or not top then
+    local cx, cy = frame:GetCenter()
+    if not cx or not cy then
         return
     end
 
-    local y = top - UIParent:GetHeight()
-
     frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", left, y)
+    frame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
 
-    db.x = left
-    db.y = y
+    db.x = cx
+    db.y = cy
 end
 
 local function ShouldHideInCombat()
@@ -274,7 +275,10 @@ local function ShowTooltip(button, specData)
         GameTooltip:AddLine("Current specialization", 0.7, 0.7, 0.7)
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Left click + SHIFT to drag", 0.7, 0.7, 0.7)
-        GameTooltip:AddLine(GetMainButtonRightClickTooltipText(), 0.7, 0.7, 0.7)
+        local rightClickText = GetMainButtonRightClickTooltipText()
+        if rightClickText ~= "" then
+            GameTooltip:AddLine(rightClickText, 0.7, 0.7, 0.7)
+        end
     else
         GameTooltip:AddLine("Click to switch", 0.2, 1, 0.2)
     end
@@ -345,7 +349,8 @@ end
 
 local function CreateSpecButton(parent, name)
     local button = CreateFrame("Button", addonName .. name, parent)
-    button:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+    local size = GetButtonSize()
+    button:SetSize(size, size)
 
     button.shadow = CreateShadow(button)
 
@@ -429,11 +434,12 @@ local function CreateSpecButton(parent, name)
 end
 
 local function GetAxisSizes(count)
-    local mainSpan = BUTTON_SIZE + BUTTON_GAP + CHEVRON_WIDTH
+    local size = GetButtonSize()
+    local mainSpan = size + BUTTON_GAP + CHEVRON_WIDTH
     local secondarySpan = 0
 
     if count > 0 then
-        secondarySpan = BUTTON_GAP + (count * BUTTON_SIZE) + ((count - 1) * BUTTON_GAP)
+        secondarySpan = BUTTON_GAP + (count * size) + ((count - 1) * BUTTON_GAP)
     end
 
     return mainSpan, secondarySpan
@@ -441,6 +447,7 @@ end
 
 local function LayoutStatic()
     local direction = GetExpandDirection()
+    local size = GetButtonSize()
 
     mainButton:ClearAllPoints()
     mainButton:SetPoint("TOPLEFT", widget, "TOPLEFT", HOVER_PADDING, -HOVER_PADDING)
@@ -453,7 +460,7 @@ local function LayoutStatic()
     chevron:SetSize(18, 7)
 
     local spacing = 4
-    local offset = (BUTTON_SIZE / 2) + spacing
+    local offset = (size / 2) + spacing
 
     if direction == "right" then
         chevron:SetPoint("CENTER", mainButton, "CENTER", offset, 0)
@@ -472,6 +479,7 @@ end
 
 local function PositionSecondaryButtons(progress)
     local direction = GetExpandDirection()
+    local size = GetButtonSize()
 
     for i = 1, #secondaryButtons do
         local button = secondaryButtons[i]
@@ -479,22 +487,22 @@ local function PositionSecondaryButtons(progress)
             button:ClearAllPoints()
 
             if direction == "right" then
-                local finalX = BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + ((i - 1) * (BUTTON_SIZE + BUTTON_GAP))
+                local finalX = BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + ((i - 1) * (size + BUTTON_GAP))
                 local hiddenX = BUTTON_GAP + CHEVRON_WIDTH - 10
                 local x = hiddenX + ((finalX - hiddenX) * progress)
                 button:SetPoint("LEFT", mainButton, "RIGHT", x, 0)
             elseif direction == "left" then
-                local finalX = -(BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + (i * BUTTON_SIZE) + ((i - 1) * BUTTON_GAP))
+                local finalX = -(BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + (i * size) + ((i - 1) * BUTTON_GAP))
                 local hiddenX = -(BUTTON_GAP + CHEVRON_WIDTH) + 10
                 local x = hiddenX + ((finalX - hiddenX) * progress)
                 button:SetPoint("LEFT", mainButton, "LEFT", x, 0)
             elseif direction == "up" then
-                local finalY = BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + ((i - 1) * (BUTTON_SIZE + BUTTON_GAP))
+                local finalY = BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + ((i - 1) * (size + BUTTON_GAP))
                 local hiddenY = BUTTON_GAP + CHEVRON_WIDTH - 10
                 local y = hiddenY + ((finalY - hiddenY) * progress)
                 button:SetPoint("BOTTOM", mainButton, "TOP", 0, y)
             else
-                local finalY = -(BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + (i * BUTTON_SIZE) + ((i - 1) * BUTTON_GAP))
+                local finalY = -(BUTTON_GAP + CHEVRON_WIDTH + BUTTON_GAP + (i * size) + ((i - 1) * BUTTON_GAP))
                 local hiddenY = -(BUTTON_GAP + CHEVRON_WIDTH) + 10
                 local y = hiddenY + ((finalY - hiddenY) * progress)
                 button:SetPoint("BOTTOM", mainButton, "BOTTOM", 0, y)
@@ -523,10 +531,11 @@ local function EnsureUI()
     EnsureDB()
 
     local db = GetDB()
+    local size = GetButtonSize()
 
     widget = CreateFrame("Frame", addonName .. "Widget", UIParent)
-    widget:SetSize(BUTTON_SIZE + (HOVER_PADDING * 2), BUTTON_SIZE + (HOVER_PADDING * 2))
-    widget:SetPoint("TOPLEFT", UIParent, "TOPLEFT", db.x, db.y)
+    widget:SetSize(size + (HOVER_PADDING * 2), size + (HOVER_PADDING * 2))
+    widget:SetPoint("CENTER", UIParent, "BOTTOMLEFT", db.x, db.y)
     widget:SetFrameStrata("MEDIUM")
     widget:SetFrameLevel(20)
     widget:SetMovable(true)
@@ -579,16 +588,15 @@ local function EnsureUI()
         cursorX = cursorX / scale
         cursorY = cursorY / scale
 
-        local left = widget:GetLeft()
-        local bottom = widget:GetBottom()
+        local centerX, centerY = widget:GetCenter()
 
-        if not left or not bottom then
+        if not centerX or not centerY then
             return
         end
 
         widget.isDragging = true
-        widget.dragOffsetX = cursorX - left
-        widget.dragOffsetY = cursorY - bottom
+        widget.dragOffsetX = cursorX - centerX
+        widget.dragOffsetY = cursorY - centerY
 
         BeginExpand()
         GameTooltip_Hide()
@@ -629,11 +637,11 @@ local function EnsureUI()
             cursorX = cursorX / scale
             cursorY = cursorY / scale
 
-            local newLeft = cursorX - self.dragOffsetX
-            local newBottom = cursorY - self.dragOffsetY
+            local newCenterX = cursorX - self.dragOffsetX
+            local newCenterY = cursorY - self.dragOffsetY
 
             self:ClearAllPoints()
-            self:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", newLeft, newBottom)
+            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", newCenterX, newCenterY)
         end
 
         if self.collapseAt and not self.isHovered and not MouseIsOver(self) and GetTime() >= self.collapseAt then
@@ -757,15 +765,24 @@ function ReSpec_RefreshLayout()
     end
 
     local db = GetDB()
+    local size = GetButtonSize()
 
     widget.currentOffset = 0
     widget.targetExpanded = false
     widget.collapseAt = nil
     widget.isDragging = false
 
-    widget:ClearAllPoints()
-    widget:SetPoint("TOPLEFT", UIParent, "TOPLEFT", db.x, db.y)
+    widget:SetSize(size + (HOVER_PADDING * 2), size + (HOVER_PADDING * 2))
+    mainButton:SetSize(size, size)
 
+    for i = 1, #secondaryButtons do
+        secondaryButtons[i]:SetSize(size, size)
+    end
+
+    widget:ClearAllPoints()
+    widget:SetPoint("CENTER", UIParent, "BOTTOMLEFT", db.x, db.y)
+
+    UpdateHoverArea()
     UpdateVisibility()
 end
 

@@ -8,25 +8,17 @@ local defaults = {
     useCustomOpacity = false,
     transparency = 70,
     fullOpacityOnHover = true,
+    buttonSize = 42,
 }
 
-local BUTTON_SIZE = 42
 local HOVER_PADDING = 6
-local WIDGET_SIZE = BUTTON_SIZE + (HOVER_PADDING * 2)
 
 local function ApplyDefaultPosition()
     local cx, cy = UIParent:GetCenter()
-    local uiHeight = UIParent:GetHeight()
 
-    if cx and cy and uiHeight then
-        local halfWidget = WIDGET_SIZE / 2
-
-        local left = cx - halfWidget
-        local top = cy + halfWidget
-        local y = top - uiHeight
-
-        ReSpecDB.x = left
-        ReSpecDB.y = y
+    if cx and cy then
+        ReSpecDB.x = cx
+        ReSpecDB.y = cy
     else
         ReSpecDB.x = 0
         ReSpecDB.y = 0

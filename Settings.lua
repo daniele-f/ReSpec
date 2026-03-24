@@ -188,6 +188,59 @@ local function CreateDropdownRow(parent, anchor, text, options, getValue, setVal
     return RegisterSettingsRow(row)
 end
 
+local function CreateSliderRow(parent, anchor, text, minValue, maxValue, getValue, setValue)
+    local row = CreateRow(parent, anchor, ROW_HEIGHT)
+
+    local label = CreateGoldLabel(row, text)
+    label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    label:SetWidth(LABEL_WIDTH)
+
+    local slider = CreateFrame("Frame", nil, row, "MinimalSliderWithSteppersTemplate")
+    slider:SetPoint("LEFT", row, "LEFT", CONTROL_OFFSET, 0)
+    slider:SetWidth(190)
+
+    local options = Settings.CreateSliderOptions(minValue, maxValue, 1)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        return math.floor(value + 0.5) .. "%"
+    end)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Min, function()
+        return ""
+    end)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Max, function()
+        return ""
+    end)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Top, function()
+        return ""
+    end)
+    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Left, function()
+        return ""
+    end)
+
+    local function Refresh()
+        slider:SetValue(Clamp(getValue(), minValue, maxValue))
+    end
+
+    slider:Init(
+        Clamp(getValue(), minValue, maxValue),
+        options.minValue,
+        options.maxValue,
+        options.steps,
+        options.formatters
+    )
+
+    slider:RegisterCallback("OnValueChanged", function(_, value)
+        setValue(Clamp(math.floor(value + 0.5), minValue, maxValue))
+        RefreshLayout()
+    end, slider)
+
+    row.Label = label
+    row.Slider = slider
+    row.Refresh = Refresh
+
+    Refresh()
+    return RegisterSettingsRow(row)
+end
+
 local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue, getEnabled, setEnabled, getValue,
                                        setValue)
     local row = CreateRow(parent, anchor, ROW_HEIGHT)
@@ -379,6 +432,23 @@ local function BuildGeneralSection(parent, anchor)
         function(value)
             EnsureDB()
             ReSpecDB.rightClickAction = value
+        end
+    )
+
+    currentAnchor = CreateSliderRow(
+        parent,
+        currentAnchor,
+        "Scale",
+        50,
+        150,
+        function()
+            EnsureDB()
+            local size = ReSpecDB.buttonSize or 42
+            return math.floor((size / 42) * 100 + 0.5)
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.buttonSize = math.floor((42 * value / 100) + 0.5)
         end
     )
 
