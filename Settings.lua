@@ -471,7 +471,7 @@ local function BuildGeneralSection(parent, anchor)
         currentAnchor,
         "Opacity",
         10,
-        100,
+        90,
         function()
             EnsureDB()
             return ReSpecDB.useCustomOpacity == true

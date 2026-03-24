@@ -2,7 +2,7 @@
 ## Title: ReSpec
 ## Notes: A collapsable button to change specializations
 ## Author: BlueRaven
-## Version: 0.0.1
+## Version: 0.0.3
 ## IconTexture: Interface/macroframe/macroframe-icon
 ## SavedVariables: ReSpecDB
 

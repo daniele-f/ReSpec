@@ -57,7 +57,7 @@ local function ComputeWidgetAlpha(isHovered)
         return 1
     end
 
-    local value = db.transparency or 100
+    local value = db.transparency or 90
     return math.max(0.1, math.min(1, value / 100))
 end
 
