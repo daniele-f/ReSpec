@@ -752,13 +752,19 @@ end
 function ReSpec_RefreshLayout()
     EnsureDB()
 
-    if not initialized then
+    if not initialized or not widget then
         return
     end
+
+    local db = GetDB()
 
     widget.currentOffset = 0
     widget.targetExpanded = false
     widget.collapseAt = nil
+    widget.isDragging = false
+
+    widget:ClearAllPoints()
+    widget:SetPoint("TOPLEFT", UIParent, "TOPLEFT", db.x, db.y)
 
     UpdateVisibility()
 end

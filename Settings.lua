@@ -11,7 +11,7 @@ local directionLabels = {
 local rightClickActionLabels = {
     settings = "Open settings",
     talents = "Open talents",
-    nothing = "Nothing",
+    nothing = "Do nothing",
 }
 
 local LEFT_MARGIN = 26
@@ -23,6 +23,11 @@ local LABEL_WIDTH = 220
 local DROPDOWN_WIDTH = 180
 local CONTROL_OFFSET = LABEL_WIDTH + 16
 
+local settingsRows = {}
+local settingsPanel = nil
+local settingsSubtitle = nil
+local settingsContentRoot = nil
+
 local function EnsureDB()
     ReSpec_EnsureDB()
 end
@@ -31,6 +36,11 @@ local function RefreshLayout()
     if ReSpec_RefreshLayout then
         ReSpec_RefreshLayout()
     end
+end
+
+local function RegisterSettingsRow(row)
+    settingsRows[#settingsRows + 1] = row
+    return row
 end
 
 local function Clamp(value, minValue, maxValue)
@@ -52,13 +62,21 @@ local function CreateHeader(panel)
     subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
     subtitle:SetText("Quick spec switching widget")
 
+    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    resetButton:SetSize(100, 30)
+    resetButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -20, -20)
+    resetButton:SetText("Reset")
+
     local reloadButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    reloadButton:SetSize(140, 30)
-    reloadButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -20, -20)
+    reloadButton:SetSize(100, 30)
+    reloadButton:SetPoint("RIGHT", resetButton, "LEFT", -8, 0)
     reloadButton:SetText("Reload UI")
     reloadButton:SetScript("OnClick", function()
         ReloadUI()
     end)
+
+    panel.ResetButton = resetButton
+    panel.ReloadButton = reloadButton
 
     return subtitle
 end
@@ -105,16 +123,23 @@ local function CreateCheckboxRow(parent, anchor, text, getValue, setValue)
 
     local checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
     checkbox:SetPoint("LEFT", row, "LEFT", CONTROL_OFFSET, 0)
-    checkbox:SetChecked(getValue())
+
+    local function Refresh()
+        checkbox:SetChecked(getValue())
+    end
 
     checkbox:SetScript("OnClick", function(self)
         setValue(self:GetChecked() and true or false)
+        Refresh()
         RefreshLayout()
     end)
 
     row.Label = label
     row.Checkbox = checkbox
-    return row
+    row.Refresh = Refresh
+
+    Refresh()
+    return RegisterSettingsRow(row)
 end
 
 local function CreateDropdownRow(parent, anchor, text, options, getValue, setValue)
@@ -155,11 +180,12 @@ local function CreateDropdownRow(parent, anchor, text, options, getValue, setVal
         end
     end)
 
-    UpdateDropdownText()
-
     row.Label = label
     row.Dropdown = dropdown
-    return row
+    row.Refresh = UpdateDropdownText
+
+    UpdateDropdownText()
+    return RegisterSettingsRow(row)
 end
 
 local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue, getEnabled, setEnabled, getValue,
@@ -172,7 +198,6 @@ local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue,
 
     local checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
     checkbox:SetPoint("LEFT", row, "LEFT", CONTROL_OFFSET, 0)
-    checkbox:SetChecked(getEnabled())
 
     local slider = CreateFrame("Frame", nil, row, "MinimalSliderWithSteppersTemplate")
     slider:SetPoint("LEFT", checkbox, "RIGHT", 12, 0)
@@ -213,14 +238,10 @@ local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue,
         end
     end
 
-    local function SetSliderValue(value, shouldRefresh)
-        value = Clamp(math.floor(value + 0.5), minValue, maxValue)
-        setValue(value)
+    local function Refresh()
+        local value = Clamp(getValue(), minValue, maxValue)
         slider:SetValue(value)
-
-        if shouldRefresh then
-            RefreshLayout()
-        end
+        UpdateEnabledState()
     end
 
     slider:Init(
@@ -242,8 +263,8 @@ local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue,
 
         if row.dependents then
             for _, dep in ipairs(row.dependents) do
-                if dep.UpdateState then
-                    dep.UpdateState()
+                if dep.Refresh then
+                    dep:Refresh()
                 end
             end
         end
@@ -251,14 +272,13 @@ local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue,
         RefreshLayout()
     end)
 
-    UpdateEnabledState()
-
     row.Label = label
     row.Checkbox = checkbox
     row.Slider = slider
-    row.SetSliderValue = SetSliderValue
-    row.UpdateEnabledState = UpdateEnabledState
-    return row
+    row.Refresh = Refresh
+
+    Refresh()
+    return RegisterSettingsRow(row)
 end
 
 local function CreateIndentedCheckboxRow(parent, anchor, text, isEnabled, getValue, setValue)
@@ -270,7 +290,7 @@ local function CreateIndentedCheckboxRow(parent, anchor, text, isEnabled, getVal
     local checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
     checkbox:SetPoint("LEFT", row, "LEFT", CONTROL_OFFSET + LEFT_MARGIN, 0)
 
-    local function UpdateState()
+    local function Refresh()
         local enabled = isEnabled()
         checkbox:SetEnabled(enabled)
         checkbox:SetAlpha(enabled and 1 or 0.45)
@@ -280,16 +300,16 @@ local function CreateIndentedCheckboxRow(parent, anchor, text, isEnabled, getVal
 
     checkbox:SetScript("OnClick", function(self)
         setValue(self:GetChecked() and true or false)
-        UpdateState()
+        Refresh()
         RefreshLayout()
     end)
 
-    UpdateState()
-
     row.Checkbox = checkbox
     row.Label = label
-    row.UpdateState = UpdateState
-    return row
+    row.Refresh = Refresh
+
+    Refresh()
+    return RegisterSettingsRow(row)
 end
 
 local function BuildGeneralSection(parent, anchor)
@@ -413,12 +433,50 @@ local function BuildGeneralSection(parent, anchor)
 end
 
 local function BuildSettingsContent(panel, subtitle)
-    local topAnchor = CreateFrame("Frame", nil, panel)
+    local contentRoot = CreateFrame("Frame", nil, panel)
+    contentRoot:SetAllPoints(panel)
+
+    local topAnchor = CreateFrame("Frame", nil, contentRoot)
     topAnchor:SetSize(1, 1)
     topAnchor:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", 0, 0)
 
-    BuildGeneralSection(panel, topAnchor)
+    BuildGeneralSection(contentRoot, topAnchor)
+
+    return contentRoot
 end
+
+local function RebuildSettingsContent()
+    settingsRows = {}
+
+    if settingsContentRoot then
+        settingsContentRoot:Hide()
+        settingsContentRoot:SetParent(nil)
+        settingsContentRoot = nil
+    end
+
+    if settingsPanel and settingsSubtitle then
+        settingsContentRoot = BuildSettingsContent(settingsPanel, settingsSubtitle)
+    end
+end
+
+local function ResetSettings()
+    ReSpec_ResetDB()
+    RebuildSettingsContent()
+    RefreshLayout()
+end
+
+StaticPopupDialogs["RESPEC_CONFIRM_RESET"] = {
+    text = "Are you sure you want to reset these settings?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function()
+        ResetSettings()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
 
 local function CreateSettingsPanel()
     EnsureDB()
@@ -427,7 +485,14 @@ local function CreateSettingsPanel()
     panel.name = addonName
 
     local subtitle = CreateHeader(panel)
-    BuildSettingsContent(panel, subtitle)
+
+    settingsPanel = panel
+    settingsSubtitle = subtitle
+    settingsContentRoot = BuildSettingsContent(panel, subtitle)
+
+    panel.ResetButton:SetScript("OnClick", function()
+        StaticPopup_Show("RESPEC_CONFIRM_RESET")
+    end)
 
     return panel
 end
