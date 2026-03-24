@@ -8,6 +8,7 @@ local defaults = {
     useCustomOpacity = false,
     transparency = 70,
     fullOpacityOnHover = true,
+    showTooltips = true,
     buttonSize = 42,
 }
 

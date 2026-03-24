@@ -42,6 +42,10 @@ local function GetButtonSize()
     return GetDB().buttonSize or DEFAULT_BUTTON_SIZE
 end
 
+local function ShouldShowTooltips()
+    return GetDB().showTooltips ~= false
+end
+
 local function ComputeWidgetAlpha(isHovered)
     local db = GetDB()
 
@@ -243,6 +247,10 @@ local function GetMainButtonRightClickTooltipText()
 end
 
 local function ShowTooltip(button, specData)
+    if not ShouldShowTooltips() then
+        return
+    end
+
     GameTooltip:SetOwner(button, "ANCHOR_NONE")
 
     local direction = GetExpandDirection()
@@ -771,6 +779,8 @@ function ReSpec_RefreshLayout()
     widget.targetExpanded = false
     widget.collapseAt = nil
     widget.isDragging = false
+
+    GameTooltip_Hide()
 
     widget:SetSize(size + (HOVER_PADDING * 2), size + (HOVER_PADDING * 2))
     mainButton:SetSize(size, size)

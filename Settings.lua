@@ -435,6 +435,20 @@ local function BuildGeneralSection(parent, anchor)
         end
     )
 
+    currentAnchor = CreateCheckboxRow(
+        parent,
+        currentAnchor,
+        "Show tooltips",
+        function()
+            EnsureDB()
+            return ReSpecDB.showTooltips ~= false
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.showTooltips = value
+        end
+    )
+
     currentAnchor = CreateSliderRow(
         parent,
         currentAnchor,
