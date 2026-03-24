@@ -27,7 +27,7 @@ local function GetDB()
 end
 
 local function GetExpandDirection()
-    return GetDB().expandDirection or "left"
+    return GetDB().expandDirection or "right"
 end
 
 local function ShouldReverseOrder()
@@ -337,19 +337,55 @@ end
 
 local function UpdateButtonVisual(button, isActive, isMain)
     if isActive then
-        button.selectedGlow:Show()
+        button.hoverInnerGlow:Hide()
         button.icon:SetAlpha(1)
         button:SetScale(1.0)
 
         if button.border then
-            button.border:SetScale(1.10)
+            button.border:SetScale(1.0)
+            button.border:SetVertexColor(1, 1, 1, 1)
         end
     else
-        button.selectedGlow:Hide()
+        button.hoverInnerGlow:Hide()
         button.icon:SetAlpha(0.88)
         button:SetScale(isMain and 1.0 or SECONDARY_SCALE)
 
         if button.border then
+            button.border:SetScale(1.0)
+            button.border:SetVertexColor(1, 1, 1, 1)
+        end
+    end
+end
+
+local function UpdateButtonHoverVisual(button, isHovered)
+    if not button or not button.specData then
+        return
+    end
+
+    local isCurrentSpec = button.specData.specIndex == GetCurrentSpecIndex()
+
+    if isCurrentSpec then
+        button.hoverInnerGlow:Hide()
+        if button.border then
+            button.border:SetVertexColor(1, 1, 1, 1)
+        end
+        return
+    end
+
+    if isHovered then
+        button.hoverInnerGlow:Show()
+        button.icon:SetAlpha(1)
+
+        if button.border then
+            button.border:SetVertexColor(1, 0.82, 0, 1)
+            button.border:SetScale(1.06)
+        end
+    else
+        button.hoverInnerGlow:Hide()
+        button.icon:SetAlpha(0.88)
+
+        if button.border then
+            button.border:SetVertexColor(1, 1, 1, 1)
             button.border:SetScale(1.0)
         end
     end
@@ -377,19 +413,17 @@ local function CreateSpecButton(parent, name)
 
     button.hoverGlow = button:CreateTexture(nil, "OVERLAY")
     button.hoverGlow:SetAllPoints()
-    button.hoverGlow:SetTexture()
-    button.hoverGlow:SetBlendMode("ADD")
-    button.hoverGlow:SetAlpha(0.45)
+    button.hoverGlow:SetColorTexture(1, 1, 1, 0.05)
     button.hoverGlow:Hide()
 
-    button.selectedGlow = button:CreateTexture(nil, "OVERLAY")
-    button.selectedGlow:SetAllPoints()
-    button.selectedGlow:SetTexture()
-    button.selectedGlow:SetBlendMode("ADD")
-    button.selectedGlow:SetAlpha(0.85)
-    button.selectedGlow:SetPoint("TOPLEFT", button.icon, -18, 18)
-    button.selectedGlow:SetPoint("BOTTOMRIGHT", button.icon, 18, -18)
-    button.selectedGlow:Hide()
+    button.hoverInnerGlow = button:CreateTexture(nil, "OVERLAY", nil, 1)
+    button.hoverInnerGlow:SetPoint("TOPLEFT", button.icon, -1, 1)
+    button.hoverInnerGlow:SetPoint("BOTTOMRIGHT", button.icon, 1, -1)
+    button.hoverInnerGlow:SetColorTexture(1, 1, 1, 0.12)
+    button.hoverInnerGlow:SetBlendMode("ADD")
+    button.hoverInnerGlow:Hide()
+
+
 
     button.pushedShade = button:CreateTexture(nil, "OVERLAY")
     button.pushedShade:SetAllPoints()
@@ -399,6 +433,7 @@ local function CreateSpecButton(parent, name)
     button:SetScript("OnEnter", function(self)
         BeginExpand()
         self.hoverGlow:Show()
+        UpdateButtonHoverVisual(self, true)
 
         if widget and widget.isDragging then
             return
@@ -411,6 +446,7 @@ local function CreateSpecButton(parent, name)
 
     button:SetScript("OnLeave", function(self)
         self.hoverGlow:Hide()
+        UpdateButtonHoverVisual(self, false)
         GameTooltip_Hide()
 
         if not MouseIsOver(widget) then
@@ -523,7 +559,7 @@ local function PositionSecondaryButtons(progress)
             else
                 button:Hide()
                 button.hoverGlow:Hide()
-                button.selectedGlow:Hide()
+                button.hoverInnerGlow:Hide()
             end
         else
             button:Hide()
@@ -753,7 +789,7 @@ UpdateSpecs = function()
             button.specData = nil
             button:Hide()
             button.hoverGlow:Hide()
-            button.selectedGlow:Hide()
+            button.hoverInnerGlow:Hide()
         end
     end
 
