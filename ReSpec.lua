@@ -61,6 +61,22 @@ local function ComputeWidgetAlpha(isHovered)
     return math.max(0.1, math.min(1, value / 100))
 end
 
+local function ShouldUseExpandedOpacity()
+    if not widget then
+        return false
+    end
+
+    if widget.isHovered then
+        return true
+    end
+
+    if widget.collapseAt and widget.targetExpanded then
+        return true
+    end
+
+    return false
+end
+
 local function SavePosition(frame)
     local db = GetDB()
 
@@ -708,7 +724,7 @@ local function EnsureUI()
             progress = math.min(1, math.max(0, self.currentOffset / maxSecondarySpan))
         end
 
-        local targetAlpha = ComputeWidgetAlpha(self.isHovered)
+        local targetAlpha = ComputeWidgetAlpha(ShouldUseExpandedOpacity())
         local alphaDiff = targetAlpha - (self.currentAlpha or targetAlpha)
 
         if math.abs(alphaDiff) < 0.01 then
