@@ -67,16 +67,7 @@ local function CreateHeader(panel)
     resetButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -20, -20)
     resetButton:SetText("Reset")
 
-    local reloadButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    reloadButton:SetSize(100, 30)
-    reloadButton:SetPoint("RIGHT", resetButton, "LEFT", -8, 0)
-    reloadButton:SetText("Reload UI")
-    reloadButton:SetScript("OnClick", function()
-        ReloadUI()
-    end)
-
     panel.ResetButton = resetButton
-    panel.ReloadButton = reloadButton
 
     return subtitle
 end
@@ -482,7 +473,7 @@ local function BuildGeneralSection(parent, anchor)
         end,
         function()
             EnsureDB()
-            return ReSpecDB.transparency or 100
+            return ReSpecDB.transparency or 90
         end,
         function(value)
             EnsureDB()
