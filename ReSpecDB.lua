@@ -10,9 +10,8 @@ local defaults = {
     fullOpacityOnHover = true,
     showTooltips = true,
     buttonSize = 42,
+    lootSpecEnabled = true,
 }
-
-local HOVER_PADDING = 6
 
 local function ApplyDefaultPosition()
     local cx, cy = UIParent:GetCenter()

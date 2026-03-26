@@ -42,8 +42,22 @@ local function GetButtonSize()
     return GetDB().buttonSize or DEFAULT_BUTTON_SIZE
 end
 
+local function GetLootCheckboxSize()
+    local buttonSize = GetButtonSize()
+    return math.max(12, math.floor(buttonSize * 0.43 + 0.5))
+end
+
+local function GetLootCheckboxOffset()
+    local buttonSize = GetButtonSize()
+    return math.max(1, math.floor(buttonSize * 0.05 + 0.5))
+end
+
 local function ShouldShowTooltips()
     return GetDB().showTooltips ~= false
+end
+
+local function IsLootSpecSelectorEnabled()
+    return GetDB().lootSpecEnabled ~= false
 end
 
 local function ComputeWidgetAlpha(isHovered)
@@ -57,8 +71,8 @@ local function ComputeWidgetAlpha(isHovered)
         return 1
     end
 
-    local value = db.transparency or 90
-    return math.max(0.1, math.min(1, value / 100))
+    local value = math.max(10, math.min(90, db.transparency or 90))
+    return value / 100
 end
 
 local function ShouldUseExpandedOpacity()
@@ -94,6 +108,53 @@ end
 
 local function ShouldHideInCombat()
     return GetDB().hideInCombat == true
+end
+
+local function GetCurrentSpecIndex()
+    if C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
+        return C_SpecializationInfo.GetSpecialization()
+    end
+
+    return GetSpecialization()
+end
+
+local function GetSpecData(specIndex)
+    if not specIndex then
+        return nil
+    end
+
+    local specID, name, _, icon
+
+    if C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo then
+        specID, name, _, icon = C_SpecializationInfo.GetSpecializationInfo(specIndex)
+    else
+        specID, name, _, icon = GetSpecializationInfo(specIndex)
+    end
+
+    if not specID then
+        return nil
+    end
+
+    return {
+        specIndex = specIndex,
+        specID = specID,
+        name = name,
+        icon = icon,
+    }
+end
+
+local function GetVisibleSpecs()
+    local specs = {}
+    local count = GetNumSpecializations() or 0
+
+    for specIndex = 1, count do
+        local data = GetSpecData(specIndex)
+        if data then
+            specs[#specs + 1] = data
+        end
+    end
+
+    return specs
 end
 
 local function UpdateVisibility()
@@ -153,53 +214,6 @@ local function HandleMainButtonRightClick()
     end
 end
 
-local function GetCurrentSpecIndex()
-    if C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
-        return C_SpecializationInfo.GetSpecialization()
-    end
-
-    return GetSpecialization()
-end
-
-local function GetSpecData(specIndex)
-    if not specIndex then
-        return nil
-    end
-
-    local specID, name, _, icon
-
-    if C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo then
-        specID, name, _, icon = C_SpecializationInfo.GetSpecializationInfo(specIndex)
-    else
-        specID, name, _, icon = GetSpecializationInfo(specIndex)
-    end
-
-    if not specID then
-        return nil
-    end
-
-    return {
-        specIndex = specIndex,
-        specID = specID,
-        name = name,
-        icon = icon,
-    }
-end
-
-local function GetVisibleSpecs()
-    local specs = {}
-    local count = GetNumSpecializations() or 0
-
-    for specIndex = 1, count do
-        local data = GetSpecData(specIndex)
-        if data then
-            specs[#specs + 1] = data
-        end
-    end
-
-    return specs
-end
-
 local function ReverseTableInPlace(t)
     local left = 1
     local right = #t
@@ -245,6 +259,139 @@ local function SwitchToSpec(specIndex)
         C_SpecializationInfo.SetSpecialization(specIndex)
     else
         SetSpecialization(specIndex)
+    end
+end
+
+local function GetLootSpecMode()
+    return GetLootSpecialization() or 0
+end
+
+local function IsCurrentSpecButton(button)
+    if not button or not button.specData then
+        return false
+    end
+
+    local currentSpec = GetSpecData(GetCurrentSpecIndex())
+    return currentSpec and currentSpec.specID == button.specData.specID
+end
+
+local function GetLootCheckboxState(button)
+    if not button or not button.specData then
+        return "none"
+    end
+
+    local lootSpecMode = GetLootSpecMode()
+    local specID = button.specData.specID
+
+    if IsCurrentSpecButton(button) then
+        if lootSpecMode == 0 then
+            return "current"
+        end
+
+        if lootSpecMode == specID then
+            return "explicit"
+        end
+
+        return "none"
+    end
+
+    if lootSpecMode == specID then
+        return "explicit"
+    end
+
+    return "none"
+end
+
+local function SetLootSpecFromButton(button)
+    if not button or not button.specData then
+        return
+    end
+
+    local specID = button.specData.specID
+    local lootSpecMode = GetLootSpecMode()
+
+    if IsCurrentSpecButton(button) then
+        if lootSpecMode == 0 then
+            SetLootSpecialization(specID)
+        elseif lootSpecMode == specID then
+            SetLootSpecialization(0)
+        else
+            SetLootSpecialization(specID)
+        end
+        return
+    end
+
+    SetLootSpecialization(specID)
+end
+
+local function ShowLootSpecTooltip(owner, button)
+    if not ShouldShowTooltips() or not button or not button.specData then
+        return
+    end
+
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+
+    local state = GetLootCheckboxState(button)
+
+    if state == "current" then
+        GameTooltip:SetText("Current loot specialization", 0.3, 1, 0.3)
+        GameTooltip:AddLine("Click to lock loot to this specialization.", 0.8, 0.8, 0.8, true)
+    elseif state == "explicit" then
+        if IsCurrentSpecButton(button) then
+            GameTooltip:SetText("Loot locked to this specialization", 1, 0.82, 0)
+            GameTooltip:AddLine("Click to keep loot locked to active Specialization.", 0.8, 0.8, 0.8, true)
+        else
+            GameTooltip:SetText("Current loot specialization", 1, 0.82, 0)
+        end
+    else
+        GameTooltip:SetText("Set loot specialization", 1, 1, 1)
+    end
+
+    GameTooltip:Show()
+end
+
+local function UpdateLootSpecCheckbox(button)
+    if not button or not button.lootCheck or not button.specData then
+        return
+    end
+
+    if not IsLootSpecSelectorEnabled() then
+        button.lootCheck:Hide()
+        return
+    end
+
+    button.lootCheck:Show()
+
+    local state = GetLootCheckboxState(button)
+
+    if state == "current" then
+        button.lootCheck.check:Show()
+        button.lootCheck.bg:SetColorTexture(0.04, 0.16, 0.04, 0.95)
+        button.lootCheck.border:SetVertexColor(0.3, 1, 0.3, 1)
+        button.lootCheck.check:SetVertexColor(0.3, 1, 0.3, 1)
+    elseif state == "explicit" then
+        button.lootCheck.check:Show()
+        button.lootCheck.bg:SetColorTexture(0.18, 0.14, 0.03, 0.95)
+        button.lootCheck.border:SetVertexColor(1, 0.82, 0, 1)
+        button.lootCheck.check:SetVertexColor(1, 0.82, 0, 1)
+    else
+        button.lootCheck.check:Hide()
+        button.lootCheck.bg:SetColorTexture(0.02, 0.02, 0.02, 0.85)
+        button.lootCheck.border:SetVertexColor(1, 1, 1, 0.7)
+        button.lootCheck.check:SetVertexColor(1, 0.82, 0, 1)
+    end
+end
+
+local function RefreshLootSpecCheckboxes()
+    if mainButton and mainButton.specData then
+        UpdateLootSpecCheckbox(mainButton)
+    end
+
+    for i = 1, #secondaryButtons do
+        local button = secondaryButtons[i]
+        if button and button.specData then
+            UpdateLootSpecCheckbox(button)
+        end
     end
 end
 
@@ -407,6 +554,52 @@ local function UpdateButtonHoverVisual(button, isHovered)
     end
 end
 
+local function CreateLootCheckbox(button)
+    local box = CreateFrame("Button", nil, button)
+    local size = GetLootCheckboxSize()
+    local offset = GetLootCheckboxOffset()
+
+    box:SetSize(size, size)
+    box:SetPoint("TOPLEFT", button, "TOPLEFT", offset, -offset)
+    box:RegisterForClicks("LeftButtonUp")
+
+    box.bg = box:CreateTexture(nil, "BACKGROUND")
+    box.bg:SetAllPoints()
+    box.bg:SetColorTexture(0.02, 0.02, 0.02, 0.85)
+
+    box.border = box:CreateTexture(nil, "BORDER")
+    box.border:SetAllPoints()
+    box.border:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+
+    box.check = box:CreateTexture(nil, "OVERLAY")
+    box.check:SetPoint("TOPLEFT", box, "TOPLEFT", 1, -1)
+    box.check:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -1, 1)
+    box.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+    box.check:SetVertexColor(1, 0.82, 0, 1)
+    box.check:Hide()
+
+    box:SetScript("OnEnter", function(self)
+        ShowLootSpecTooltip(self, button)
+    end)
+
+    box:SetScript("OnLeave", function()
+        GameTooltip_Hide()
+    end)
+
+    box:SetScript("OnClick", function(self)
+        SetLootSpecFromButton(button)
+        RefreshLootSpecCheckboxes()
+
+        if self:IsMouseOver() then
+            ShowLootSpecTooltip(self, button)
+        else
+            GameTooltip_Hide()
+        end
+    end)
+
+    return box
+end
+
 local function CreateSpecButton(parent, name)
     local button = CreateFrame("Button", addonName .. name, parent)
     local size = GetButtonSize()
@@ -439,12 +632,12 @@ local function CreateSpecButton(parent, name)
     button.hoverInnerGlow:SetBlendMode("ADD")
     button.hoverInnerGlow:Hide()
 
-
-
     button.pushedShade = button:CreateTexture(nil, "OVERLAY")
     button.pushedShade:SetAllPoints()
     button.pushedShade:SetColorTexture(0, 0, 0, 0.2)
     button.pushedShade:Hide()
+
+    button.lootCheck = CreateLootCheckbox(button)
 
     button:SetScript("OnEnter", function(self)
         BeginExpand()
@@ -463,7 +656,10 @@ local function CreateSpecButton(parent, name)
     button:SetScript("OnLeave", function(self)
         self.hoverGlow:Hide()
         UpdateButtonHoverVisual(self, false)
-        GameTooltip_Hide()
+
+        if GameTooltip:GetOwner() == self then
+            GameTooltip_Hide()
+        end
 
         if not MouseIsOver(widget) then
             BeginDelayedCollapse()
@@ -572,10 +768,14 @@ local function PositionSecondaryButtons(progress)
 
             if progress > 0.03 then
                 button:Show()
+                if IsLootSpecSelectorEnabled() then
+                    button.lootCheck:Show()
+                end
             else
                 button:Hide()
                 button.hoverGlow:Hide()
                 button.hoverInnerGlow:Hide()
+                button.lootCheck:Hide()
             end
         else
             button:Hide()
@@ -806,10 +1006,12 @@ UpdateSpecs = function()
             button:Hide()
             button.hoverGlow:Hide()
             button.hoverInnerGlow:Hide()
+            button.lootCheck:Hide()
         end
     end
 
     LayoutStatic()
+    RefreshLootSpecCheckboxes()
 
     widget.currentAlpha = ComputeWidgetAlpha(widget.isHovered)
     widget:SetAlpha(widget.currentAlpha)
@@ -826,6 +1028,8 @@ function ReSpec_RefreshLayout()
 
     local db = GetDB()
     local size = GetButtonSize()
+    local lootBoxSize = GetLootCheckboxSize()
+    local lootBoxOffset = GetLootCheckboxOffset()
 
     widget.currentOffset = 0
     widget.targetExpanded = false
@@ -837,8 +1041,21 @@ function ReSpec_RefreshLayout()
     widget:SetSize(size + (HOVER_PADDING * 2), size + (HOVER_PADDING * 2))
     mainButton:SetSize(size, size)
 
+    if mainButton.lootCheck then
+        mainButton.lootCheck:SetSize(lootBoxSize, lootBoxSize)
+        mainButton.lootCheck:ClearAllPoints()
+        mainButton.lootCheck:SetPoint("TOPLEFT", mainButton, "TOPLEFT", lootBoxOffset, -lootBoxOffset)
+    end
+
     for i = 1, #secondaryButtons do
         secondaryButtons[i]:SetSize(size, size)
+
+        if secondaryButtons[i].lootCheck then
+            secondaryButtons[i].lootCheck:SetSize(lootBoxSize, lootBoxSize)
+            secondaryButtons[i].lootCheck:ClearAllPoints()
+            secondaryButtons[i].lootCheck:SetPoint("TOPLEFT", secondaryButtons[i], "TOPLEFT", lootBoxOffset,
+                -lootBoxOffset)
+        end
     end
 
     widget:ClearAllPoints()
@@ -846,17 +1063,25 @@ function ReSpec_RefreshLayout()
 
     UpdateHoverArea()
     UpdateVisibility()
+    RefreshLootSpecCheckboxes()
 end
 
 addon:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         EnsureUI()
         UpdateVisibility()
+        RefreshLootSpecCheckboxes()
         return
     end
 
     if event == "PLAYER_SPECIALIZATION_CHANGED" then
         UpdateVisibility()
+        RefreshLootSpecCheckboxes()
+        return
+    end
+
+    if event == "PLAYER_LOOT_SPEC_UPDATED" then
+        RefreshLootSpecCheckboxes()
         return
     end
 
@@ -869,12 +1094,14 @@ addon:SetScript("OnEvent", function(_, event)
 
     if event == "PLAYER_REGEN_ENABLED" then
         UpdateVisibility()
+        RefreshLootSpecCheckboxes()
         return
     end
 end)
 
 addon:RegisterEvent("PLAYER_LOGIN")
 addon:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+addon:RegisterEvent("PLAYER_LOOT_SPEC_UPDATED")
 addon:RegisterEvent("PLAYER_REGEN_DISABLED")
 addon:RegisterEvent("PLAYER_REGEN_ENABLED")
 

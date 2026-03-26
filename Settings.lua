@@ -53,6 +53,100 @@ local function Clamp(value, minValue, maxValue)
     return value
 end
 
+local function RegisterSearchableSettings(category)
+    EnsureDB()
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_hide_in_combat",
+        ReSpecDB,
+        "boolean",
+        "Hide in combat",
+        true
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_expand_direction",
+        ReSpecDB,
+        "string",
+        "Direction",
+        "right"
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_reverse_order",
+        ReSpecDB,
+        "boolean",
+        "Reverse order",
+        false
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_right_click_action",
+        ReSpecDB,
+        "string",
+        "Right click",
+        "settings"
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_show_tooltips",
+        ReSpecDB,
+        "boolean",
+        "Show tooltips",
+        true
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_button_size",
+        ReSpecDB,
+        "number",
+        "Scale",
+        42
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_use_custom_opacity",
+        ReSpecDB,
+        "boolean",
+        "Opacity",
+        false
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_transparency",
+        ReSpecDB,
+        "number",
+        "Opacity value",
+        90
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_full_opacity_on_hover",
+        ReSpecDB,
+        "boolean",
+        "Full opacity on hover",
+        true
+    )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_loot_spec_enabled",
+        ReSpecDB,
+        "boolean",
+        "Enable loot spec selector",
+        true
+    )
+end
+
 local function CreateHeader(panel)
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
     title:SetPoint("TOPLEFT", LEFT_MARGIN, TOP_MARGIN)
@@ -429,6 +523,20 @@ local function BuildGeneralSection(parent, anchor)
     currentAnchor = CreateCheckboxRow(
         parent,
         currentAnchor,
+        "Enable loot spec selector",
+        function()
+            EnsureDB()
+            return ReSpecDB.lootSpecEnabled ~= false
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.lootSpecEnabled = value
+        end
+    )
+
+    currentAnchor = CreateCheckboxRow(
+        parent,
+        currentAnchor,
         "Show tooltips",
         function()
             EnsureDB()
@@ -578,6 +686,7 @@ local function RegisterSettings()
     local panel = CreateSettingsPanel()
 
     local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+    RegisterSearchableSettings(category)
     Settings.RegisterAddOnCategory(category)
 
     ReSpecSettingsCategory = category
