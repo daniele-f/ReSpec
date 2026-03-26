@@ -59,91 +59,151 @@ local function RegisterSearchableSettings(category)
     Settings.RegisterProxySetting(
         category,
         "respec_hide_in_combat",
-        ReSpecDB,
-        "boolean",
+        Settings.VarType.Boolean,
         "Hide in combat",
-        true
+        true,
+        function()
+            return ReSpecDB.hideInCombat == true
+        end,
+        function(value)
+            ReSpecDB.hideInCombat = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_expand_direction",
-        ReSpecDB,
-        "string",
+        Settings.VarType.String,
         "Direction",
-        "right"
+        "right",
+        function()
+            return ReSpecDB.expandDirection or "right"
+        end,
+        function(value)
+            ReSpecDB.expandDirection = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_reverse_order",
-        ReSpecDB,
-        "boolean",
+        Settings.VarType.Boolean,
         "Reverse order",
-        false
+        false,
+        function()
+            return ReSpecDB.reverseOrder == true
+        end,
+        function(value)
+            ReSpecDB.reverseOrder = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_right_click_action",
-        ReSpecDB,
-        "string",
+        Settings.VarType.String,
         "Right click",
-        "settings"
+        "settings",
+        function()
+            return ReSpecDB.rightClickAction or "settings"
+        end,
+        function(value)
+            ReSpecDB.rightClickAction = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_show_tooltips",
-        ReSpecDB,
-        "boolean",
+        Settings.VarType.Boolean,
         "Show tooltips",
-        true
+        true,
+        function()
+            return ReSpecDB.showTooltips ~= false
+        end,
+        function(value)
+            ReSpecDB.showTooltips = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_button_size",
-        ReSpecDB,
-        "number",
+        Settings.VarType.Number,
         "Scale",
-        42
+        42,
+        function()
+            return ReSpecDB.buttonSize or 42
+        end,
+        function(value)
+            ReSpecDB.buttonSize = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_use_custom_opacity",
-        ReSpecDB,
-        "boolean",
+        Settings.VarType.Boolean,
         "Opacity",
-        false
+        false,
+        function()
+            return ReSpecDB.useCustomOpacity == true
+        end,
+        function(value)
+            ReSpecDB.useCustomOpacity = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_transparency",
-        ReSpecDB,
-        "number",
+        Settings.VarType.Number,
         "Opacity value",
-        90
+        90,
+        function()
+            return ReSpecDB.transparency or 90
+        end,
+        function(value)
+            ReSpecDB.transparency = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_full_opacity_on_hover",
-        ReSpecDB,
-        "boolean",
+        Settings.VarType.Boolean,
         "Full opacity on hover",
-        true
+        true,
+        function()
+            return ReSpecDB.fullOpacityOnHover == true
+        end,
+        function(value)
+            ReSpecDB.fullOpacityOnHover = value
+            RefreshLayout()
+        end
     )
 
     Settings.RegisterProxySetting(
         category,
         "respec_loot_spec_enabled",
-        ReSpecDB,
-        "boolean",
+        Settings.VarType.Boolean,
         "Enable loot spec selector",
-        true
+        true,
+        function()
+            return ReSpecDB.lootSpecEnabled ~= false
+        end,
+        function(value)
+            ReSpecDB.lootSpecEnabled = value
+            RefreshLayout()
+        end
     )
 end
 
