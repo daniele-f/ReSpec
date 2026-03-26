@@ -203,6 +203,8 @@ end
 function ReSpec.SetLootSpecPopupRowSelected(row, isSelected)
     row.isSelected = isSelected == true
 
+    C.ApplyTexture(row.bg, C.BG_DARK)
+
     if row.isSelected then
         row.selectedBg:Show()
         row.selectedTop:Show()
