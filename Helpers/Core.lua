@@ -73,6 +73,10 @@ function ReSpec.IsLootSpecSelectorEnabled()
     return ReSpec.GetDB().lootSpecEnabled ~= false and ReSpec.GetRightClickAction() ~= "lootspec"
 end
 
+function ReSpec.ShouldShowLootSpecIcon()
+    return ReSpec.GetDB().showLootSpecIcon ~= false
+end
+
 function ReSpec.ShouldHideInCombat()
     return ReSpec.GetDB().hideInCombat == true
 end
@@ -236,6 +240,17 @@ end
 
 function ReSpec.GetLootSpecMode()
     return GetLootSpecialization() or 0
+end
+
+function ReSpec.GetDisplayedLootSpecID()
+    local lootSpecMode = ReSpec.GetLootSpecMode()
+
+    if lootSpecMode == 0 then
+        local currentSpec = ReSpec.GetSpecData(ReSpec.GetCurrentSpecIndex())
+        return currentSpec and currentSpec.specID or 0
+    end
+
+    return lootSpecMode
 end
 
 function ReSpec.IsCurrentSpecButton(button)

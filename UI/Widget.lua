@@ -3,6 +3,8 @@ local C = ReSpec.Colors
 local S = ReSpec.State
 local K = ReSpec.Constants
 
+local LOOT_SPEC_CORNER_ICON_TEXTURE = "Interface\\AddOns\\ReSpec\\Assets\\lootbag"
+
 -- ======================================================
 -- LOOT CHECKBOX UI
 -- ======================================================
@@ -36,6 +38,37 @@ function ReSpec.UpdateLootSpecCheckbox(button)
     end
 end
 
+function ReSpec.UpdateLootSpecIcon(button)
+    if not button or not button.lootSpecIcon or not button.specData then
+        return
+    end
+
+    if not ReSpec.ShouldShowLootSpecIcon() then
+        button.lootSpecIcon:Hide()
+        return
+    end
+
+    local displayedLootSpecID = ReSpec.GetDisplayedLootSpecID()
+    if displayedLootSpecID == button.specData.specID then
+        button.lootSpecIcon:Show()
+    else
+        button.lootSpecIcon:Hide()
+    end
+end
+
+function ReSpec.RefreshLootSpecIcons()
+    if S.mainButton and S.mainButton.specData then
+        ReSpec.UpdateLootSpecIcon(S.mainButton)
+    end
+
+    for i = 1, #S.secondaryButtons do
+        local button = S.secondaryButtons[i]
+        if button and button.specData then
+            ReSpec.UpdateLootSpecIcon(button)
+        end
+    end
+end
+
 function ReSpec.RefreshLootSpecCheckboxes()
     if S.mainButton and S.mainButton.specData then
         ReSpec.UpdateLootSpecCheckbox(S.mainButton)
@@ -47,6 +80,8 @@ function ReSpec.RefreshLootSpecCheckboxes()
             ReSpec.UpdateLootSpecCheckbox(button)
         end
     end
+
+    ReSpec.RefreshLootSpecIcons()
 end
 
 function ReSpec.CreateLootCheckbox(button)
@@ -199,6 +234,11 @@ function ReSpec.CreateSpecButton(parent, name)
     button.pushedShade:SetAllPoints()
     C.ApplyTexture(button.pushedShade, C.PUSHED_SHADE)
     button.pushedShade:Hide()
+
+    button.lootSpecIcon = button:CreateTexture(nil, "OVERLAY", nil, 3)
+    button.lootSpecIcon:SetTexture(LOOT_SPEC_CORNER_ICON_TEXTURE)
+    button.lootSpecIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    button.lootSpecIcon:Hide()
 
     button.lootCheck = ReSpec.CreateLootCheckbox(button)
 
@@ -384,6 +424,20 @@ function ReSpec.PositionSecondaryButtons(progress)
     end
 end
 
+local function UpdateLootSpecIconLayout(button)
+    if not button or not button.lootSpecIcon then
+        return
+    end
+
+    local buttonSize = ReSpec.GetButtonSize()
+    local iconSize = math.max(12, math.floor(buttonSize * 0.34 + 0.5))
+    local inset = math.max(1, math.floor(buttonSize * 0.03 + 0.5))
+
+    button.lootSpecIcon:ClearAllPoints()
+    button.lootSpecIcon:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -inset, inset)
+    button.lootSpecIcon:SetSize(iconSize, iconSize)
+end
+
 -- ======================================================
 -- CORE UI
 -- ======================================================
@@ -422,6 +476,7 @@ function ReSpec.EnsureUI()
 
     S.mainButton = ReSpec.CreateSpecButton(S.widget, "MainButton")
     ReSpec.UpdateHoverArea()
+    UpdateLootSpecIconLayout(S.mainButton)
 
     S.mainButton:SetFrameLevel(S.widget:GetFrameLevel() + 20)
     S.mainButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
@@ -491,6 +546,7 @@ function ReSpec.EnsureUI()
     for i = 1, K.MAX_SECONDARY_BUTTONS do
         S.secondaryButtons[i] = ReSpec.CreateSpecButton(S.widget, "SecondaryButton" .. i)
         S.secondaryButtons[i]:SetFrameLevel(S.widget:GetFrameLevel() + 5)
+        UpdateLootSpecIconLayout(S.secondaryButtons[i])
     end
 
     S.widget:SetScript("OnUpdate", function(self, elapsed)
@@ -617,6 +673,9 @@ function ReSpec.UpdateSpecs()
             button.hoverGlow:Hide()
             button.hoverInnerGlow:Hide()
             button.lootCheck:Hide()
+            if button.lootSpecIcon then
+                button.lootSpecIcon:Hide()
+            end
         end
     end
 
@@ -659,6 +718,8 @@ function ReSpec_RefreshLayout()
         S.mainButton.lootCheck:SetPoint("TOPLEFT", S.mainButton, "TOPLEFT", lootBoxOffset, -lootBoxOffset)
     end
 
+    UpdateLootSpecIconLayout(S.mainButton)
+
     for i = 1, #S.secondaryButtons do
         S.secondaryButtons[i]:SetSize(size, size)
 
@@ -668,6 +729,8 @@ function ReSpec_RefreshLayout()
             S.secondaryButtons[i].lootCheck:SetPoint("TOPLEFT", S.secondaryButtons[i], "TOPLEFT", lootBoxOffset,
                 -lootBoxOffset)
         end
+
+        UpdateLootSpecIconLayout(S.secondaryButtons[i])
     end
 
     S.widget:ClearAllPoints()

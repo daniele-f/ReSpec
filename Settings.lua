@@ -159,6 +159,21 @@ local function RegisterSearchableSettings(category)
 
     Settings.RegisterProxySetting(
         category,
+        "respec_show_loot_spec_icon",
+        Settings.VarType.Boolean,
+        "Show loot spec icon",
+        true,
+        function()
+            return ReSpecDB.showLootSpecIcon ~= false
+        end,
+        function(value)
+            ReSpecDB.showLootSpecIcon = value
+            RefreshLayout()
+        end
+    )
+
+    Settings.RegisterProxySetting(
+        category,
         "respec_button_size",
         Settings.VarType.Number,
         "Scale",
@@ -640,6 +655,20 @@ local function BuildGeneralSection(parent, anchor)
         function(value)
             EnsureDB()
             ReSpecDB.lootSpecEnabled = value
+        end
+    )
+
+    currentAnchor = CreateCheckboxRow(
+        parent,
+        currentAnchor,
+        "Show loot spec icon",
+        function()
+            EnsureDB()
+            return ReSpecDB.showLootSpecIcon ~= false
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.showLootSpecIcon = value
         end
     )
 

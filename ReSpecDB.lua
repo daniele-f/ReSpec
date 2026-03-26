@@ -11,6 +11,7 @@ local defaults = {
     showTooltips = true,
     buttonSize = 42,
     lootSpecEnabled = true,
+    showLootSpecIcon = true,
 }
 
 local function ApplyDefaultPosition()
