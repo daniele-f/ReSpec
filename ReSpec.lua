@@ -6,6 +6,7 @@ local mainButton
 local chevron
 local secondaryButtons = {}
 local initialized = false
+local lootSpecPopup
 
 local UpdateSpecs
 
@@ -57,7 +58,7 @@ local function ShouldShowTooltips()
 end
 
 local function IsLootSpecSelectorEnabled()
-    return GetDB().lootSpecEnabled ~= false
+    return GetDB().lootSpecEnabled ~= false and GetRightClickAction() ~= "lootspec"
 end
 
 local function ComputeWidgetAlpha(isHovered)
@@ -73,6 +74,29 @@ local function ComputeWidgetAlpha(isHovered)
 
     local value = math.max(10, math.min(90, db.transparency or 90))
     return value / 100
+end
+
+local function IsMouseOverReSpecUI()
+    if widget and MouseIsOver(widget) then
+        return true
+    end
+
+    if lootSpecPopup and lootSpecPopup:IsShown() and MouseIsOver(lootSpecPopup) then
+        return true
+    end
+
+    if mainButton and mainButton.lootCheck and mainButton.lootCheck:IsShown() and MouseIsOver(mainButton.lootCheck) then
+        return true
+    end
+
+    for i = 1, #secondaryButtons do
+        local button = secondaryButtons[i]
+        if button and button.lootCheck and button.lootCheck:IsShown() and MouseIsOver(button.lootCheck) then
+            return true
+        end
+    end
+
+    return false
 end
 
 local function ShouldUseExpandedOpacity()
@@ -157,12 +181,24 @@ local function GetVisibleSpecs()
     return specs
 end
 
+local function GetLootSpecMode()
+    return GetLootSpecialization() or 0
+end
+
+local function HideLootSpecPopup()
+    if lootSpecPopup then
+        lootSpecPopup:Hide()
+        lootSpecPopup.anchorButton = nil
+    end
+end
+
 local function UpdateVisibility()
     if not widget then
         return
     end
 
     if ShouldHideInCombat() and InCombatLockdown() then
+        HideLootSpecPopup()
         widget:Hide()
         return
     end
@@ -171,6 +207,8 @@ local function UpdateVisibility()
 end
 
 local function OpenSettings()
+    HideLootSpecPopup()
+
     if ReSpecSettingsCategory then
         Settings.OpenToCategory(ReSpecSettingsCategory:GetID())
     else
@@ -179,6 +217,8 @@ local function OpenSettings()
 end
 
 local function OpenTalents()
+    HideLootSpecPopup()
+
     if PlayerSpellsFrame and PlayerSpellsFrame:IsShown() then
         HideUIPanel(PlayerSpellsFrame)
         return
@@ -196,20 +236,6 @@ local function OpenTalents()
 
     if ToggleTalentFrame then
         ToggleTalentFrame()
-        return
-    end
-end
-
-local function HandleMainButtonRightClick()
-    local action = GetRightClickAction()
-
-    if action == "settings" then
-        OpenSettings()
-        return
-    end
-
-    if action == "talents" then
-        OpenTalents()
         return
     end
 end
@@ -260,10 +286,6 @@ local function SwitchToSpec(specIndex)
     else
         SetSpecialization(specIndex)
     end
-end
-
-local function GetLootSpecMode()
-    return GetLootSpecialization() or 0
 end
 
 local function IsCurrentSpecButton(button)
@@ -339,7 +361,7 @@ local function ShowLootSpecTooltip(owner, button)
     elseif state == "explicit" then
         if IsCurrentSpecButton(button) then
             GameTooltip:SetText("Loot locked to this specialization", 1, 0.82, 0)
-            GameTooltip:AddLine("Click to keep loot locked to active Specialization.", 0.8, 0.8, 0.8, true)
+            GameTooltip:AddLine("Click to switch back to Current Specialization.", 0.8, 0.8, 0.8, true)
         else
             GameTooltip:SetText("Current loot specialization", 1, 0.82, 0)
         end
@@ -367,17 +389,14 @@ local function UpdateLootSpecCheckbox(button)
     if state == "current" then
         button.lootCheck.check:Show()
         button.lootCheck.bg:SetColorTexture(0.04, 0.16, 0.04, 0.95)
-        button.lootCheck.border:SetVertexColor(0.3, 1, 0.3, 1)
         button.lootCheck.check:SetVertexColor(0.3, 1, 0.3, 1)
     elseif state == "explicit" then
         button.lootCheck.check:Show()
         button.lootCheck.bg:SetColorTexture(0.18, 0.14, 0.03, 0.95)
-        button.lootCheck.border:SetVertexColor(1, 0.82, 0, 1)
         button.lootCheck.check:SetVertexColor(1, 0.82, 0, 1)
     else
         button.lootCheck.check:Hide()
         button.lootCheck.bg:SetColorTexture(0.02, 0.02, 0.02, 0.85)
-        button.lootCheck.border:SetVertexColor(1, 1, 1, 0.7)
         button.lootCheck.check:SetVertexColor(1, 0.82, 0, 1)
     end
 end
@@ -395,6 +414,323 @@ local function RefreshLootSpecCheckboxes()
     end
 end
 
+local function PositionLootSpecPopup()
+    if not lootSpecPopup or not mainButton or not mainButton:IsShown() then
+        return
+    end
+
+    local popupWidth = lootSpecPopup:GetWidth() or 0
+    local popupHeight = lootSpecPopup:GetHeight() or 0
+
+    local centerX = mainButton:GetCenter()
+    local top = mainButton:GetTop()
+    local bottom = mainButton:GetBottom()
+
+    local screenWidth = UIParent:GetWidth()
+    local screenHeight = UIParent:GetHeight()
+
+    if not centerX or not top or not bottom or not screenWidth or not screenHeight then
+        return
+    end
+
+    local screenPadding = 16
+    local verticalGap = 6
+
+    local left = centerX - (popupWidth / 2)
+    left = math.max(screenPadding, math.min(left, screenWidth - screenPadding - popupWidth))
+
+    local showBelow = (top + verticalGap + popupHeight) > (screenHeight - screenPadding)
+
+    lootSpecPopup:ClearAllPoints()
+
+    if showBelow then
+        local topY = bottom - verticalGap
+        lootSpecPopup:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, topY)
+    else
+        local bottomY = top + verticalGap
+        lootSpecPopup:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottomY)
+    end
+end
+
+local function EnsureLootSpecPopup()
+    if lootSpecPopup then
+        return
+    end
+
+    lootSpecPopup = CreateFrame("Frame", addonName .. "LootSpecPopup", UIParent, "BackdropTemplate")
+    lootSpecPopup:SetFrameStrata("DIALOG")
+    lootSpecPopup:SetFrameLevel(120)
+    lootSpecPopup:SetClampedToScreen(true)
+    lootSpecPopup:EnableMouse(true)
+    lootSpecPopup:Hide()
+
+    lootSpecPopup:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1,
+    })
+    lootSpecPopup:SetBackdropColor(0.01, 0.01, 0.01, 0.98)
+    lootSpecPopup:SetBackdropBorderColor(0.22, 0.22, 0.22, 1)
+
+    lootSpecPopup.rows = {}
+    lootSpecPopup.anchorButton = nil
+    lootSpecPopup._mouseWasDown = false
+
+    lootSpecPopup:SetScript("OnUpdate", function(self)
+        if not self:IsShown() then
+            return
+        end
+
+        if self.anchorButton and not self._mouseWasDown then
+            if IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton") then
+                self._mouseWasDown = true
+                if not MouseIsOver(self) and not MouseIsOver(self.anchorButton) then
+                    HideLootSpecPopup()
+                end
+            end
+        elseif self._mouseWasDown then
+            if not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then
+                self._mouseWasDown = false
+            end
+        end
+    end)
+end
+
+local function CreateLootSpecPopupRow(parent, index)
+    local row = CreateFrame("Button", nil, parent)
+    row:SetHeight(34)
+
+    row.bg = row:CreateTexture(nil, "BACKGROUND")
+    row.bg:SetAllPoints()
+    row.bg:SetColorTexture(0.01, 0.01, 0.01, 1)
+
+    row.separator = row:CreateTexture(nil, "BORDER")
+    row.separator:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+    row.separator:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+    row.separator:SetHeight(1)
+    row.separator:SetColorTexture(0.20, 0.20, 0.20, 1)
+
+    row.selectedBg = row:CreateTexture(nil, "ARTWORK")
+    row.selectedBg:SetAllPoints()
+    row.selectedBg:SetColorTexture(0.18, 0.13, 0.02, 0.95)
+    row.selectedBg:Hide()
+
+    row.selectedTop = row:CreateTexture(nil, "OVERLAY")
+    row.selectedTop:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+    row.selectedTop:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
+    row.selectedTop:SetHeight(1)
+    row.selectedTop:SetColorTexture(1, 0.82, 0, 1)
+    row.selectedTop:Hide()
+
+    row.selectedBottom = row:CreateTexture(nil, "OVERLAY")
+    row.selectedBottom:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+    row.selectedBottom:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+    row.selectedBottom:SetHeight(1)
+    row.selectedBottom:SetColorTexture(1, 0.82, 0, 1)
+    row.selectedBottom:Hide()
+
+    row.selectedLeft = row:CreateTexture(nil, "OVERLAY")
+    row.selectedLeft:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+    row.selectedLeft:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+    row.selectedLeft:SetWidth(1)
+    row.selectedLeft:SetColorTexture(1, 0.82, 0, 1)
+    row.selectedLeft:Hide()
+
+    row.selectedRight = row:CreateTexture(nil, "OVERLAY")
+    row.selectedRight:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
+    row.selectedRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+    row.selectedRight:SetWidth(1)
+    row.selectedRight:SetColorTexture(1, 0.82, 0, 1)
+    row.selectedRight:Hide()
+
+    row.indicatorBg = row:CreateTexture(nil, "ARTWORK")
+    row.indicatorBg:SetSize(12, 12)
+    row.indicatorBg:SetPoint("LEFT", row, "LEFT", 10, 0)
+    row.indicatorBg:SetTexture("Interface\\Buttons\\WHITE8X8")
+    row.indicatorBg:SetColorTexture(0.10, 0.10, 0.10, 1)
+
+    row.indicatorBorderTop = row:CreateTexture(nil, "OVERLAY")
+    row.indicatorBorderTop:SetPoint("TOPLEFT", row.indicatorBg, "TOPLEFT", 0, 0)
+    row.indicatorBorderTop:SetPoint("TOPRIGHT", row.indicatorBg, "TOPRIGHT", 0, 0)
+    row.indicatorBorderTop:SetHeight(1)
+    row.indicatorBorderTop:SetColorTexture(0.45, 0.45, 0.45, 1)
+
+    row.indicatorBorderBottom = row:CreateTexture(nil, "OVERLAY")
+    row.indicatorBorderBottom:SetPoint("BOTTOMLEFT", row.indicatorBg, "BOTTOMLEFT", 0, 0)
+    row.indicatorBorderBottom:SetPoint("BOTTOMRIGHT", row.indicatorBg, "BOTTOMRIGHT", 0, 0)
+    row.indicatorBorderBottom:SetHeight(1)
+    row.indicatorBorderBottom:SetColorTexture(0.45, 0.45, 0.45, 1)
+
+    row.indicatorBorderLeft = row:CreateTexture(nil, "OVERLAY")
+    row.indicatorBorderLeft:SetPoint("TOPLEFT", row.indicatorBg, "TOPLEFT", 0, 0)
+    row.indicatorBorderLeft:SetPoint("BOTTOMLEFT", row.indicatorBg, "BOTTOMLEFT", 0, 0)
+    row.indicatorBorderLeft:SetWidth(1)
+    row.indicatorBorderLeft:SetColorTexture(0.45, 0.45, 0.45, 1)
+
+    row.indicatorBorderRight = row:CreateTexture(nil, "OVERLAY")
+    row.indicatorBorderRight:SetPoint("TOPRIGHT", row.indicatorBg, "TOPRIGHT", 0, 0)
+    row.indicatorBorderRight:SetPoint("BOTTOMRIGHT", row.indicatorBg, "BOTTOMRIGHT", 0, 0)
+    row.indicatorBorderRight:SetWidth(1)
+    row.indicatorBorderRight:SetColorTexture(0.45, 0.45, 0.45, 1)
+
+    row.indicatorDot = row:CreateTexture(nil, "OVERLAY")
+    row.indicatorDot:SetSize(6, 6)
+    row.indicatorDot:SetPoint("CENTER", row.indicatorBg, "CENTER", 0, 0)
+    row.indicatorDot:SetTexture("Interface\\Buttons\\WHITE8X8")
+    row.indicatorDot:SetColorTexture(1, 0.82, 0, 1)
+    row.indicatorDot:Hide()
+
+    row.text = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    row.text:SetPoint("LEFT", row.indicatorBg, "RIGHT", 10, 0)
+    row.text:SetPoint("RIGHT", row, "RIGHT", -10, 0)
+    row.text:SetJustifyH("LEFT")
+
+    row:SetScript("OnEnter", function(self)
+        if not self.isSelected then
+            self.bg:SetColorTexture(0.05, 0.05, 0.05, 1)
+        end
+    end)
+
+    row:SetScript("OnLeave", function(self)
+        if not self.isSelected then
+            self.bg:SetColorTexture(0.01, 0.01, 0.01, 1)
+        end
+    end)
+
+    parent.rows[index] = row
+    return row
+end
+
+local function SetLootSpecPopupRowSelected(row, isSelected)
+    row.isSelected = isSelected == true
+
+    if row.isSelected then
+        row.selectedBg:Show()
+        row.selectedTop:Show()
+        row.selectedBottom:Show()
+        row.selectedLeft:Show()
+        row.selectedRight:Show()
+
+        row.indicatorBg:SetColorTexture(0.16, 0.12, 0.02, 1)
+        row.indicatorBorderTop:SetColorTexture(1, 0.82, 0, 1)
+        row.indicatorBorderBottom:SetColorTexture(1, 0.82, 0, 1)
+        row.indicatorBorderLeft:SetColorTexture(1, 0.82, 0, 1)
+        row.indicatorBorderRight:SetColorTexture(1, 0.82, 0, 1)
+        row.indicatorDot:Show()
+
+        row.text:SetTextColor(1, 1, 1)
+    else
+        row.selectedBg:Hide()
+        row.selectedTop:Hide()
+        row.selectedBottom:Hide()
+        row.selectedLeft:Hide()
+        row.selectedRight:Hide()
+
+        row.indicatorBg:SetColorTexture(0.10, 0.10, 0.10, 1)
+        row.indicatorBorderTop:SetColorTexture(0.45, 0.45, 0.45, 1)
+        row.indicatorBorderBottom:SetColorTexture(0.45, 0.45, 0.45, 1)
+        row.indicatorBorderLeft:SetColorTexture(0.45, 0.45, 0.45, 1)
+        row.indicatorBorderRight:SetColorTexture(0.45, 0.45, 0.45, 1)
+        row.indicatorDot:Hide()
+
+        row.text:SetTextColor(0.95, 0.95, 0.95)
+    end
+end
+
+local function RefreshLootSpecPopup()
+    if not lootSpecPopup or not mainButton or not mainButton.specData then
+        return
+    end
+
+    local currentSpec = GetSpecData(GetCurrentSpecIndex())
+    local lootSpecMode = GetLootSpecMode()
+    local specs = GetVisibleSpecs()
+    local entries = {}
+
+    entries[#entries + 1] = {
+        text = string.format("Current Specialization (%s)", currentSpec and currentSpec.name or UNKNOWN),
+        selected = lootSpecMode == 0,
+        onClick = function()
+            SetLootSpecialization(0)
+            RefreshLootSpecCheckboxes()
+            RefreshLootSpecPopup()
+        end,
+    }
+
+    for i = 1, #specs do
+        local spec = specs[i]
+        entries[#entries + 1] = {
+            text = spec.name,
+            selected = lootSpecMode == spec.specID,
+            onClick = function()
+                SetLootSpecialization(spec.specID)
+                RefreshLootSpecCheckboxes()
+                RefreshLootSpecPopup()
+            end,
+        }
+    end
+
+    local rowHeight = 40
+    local innerPadding = 4
+    local width = 310
+    local height = (#entries * rowHeight) + (innerPadding * 2)
+
+    lootSpecPopup:SetSize(width, height)
+
+    for i = 1, #entries do
+        local row = lootSpecPopup.rows[i] or CreateLootSpecPopupRow(lootSpecPopup, i)
+        local topY = -innerPadding - ((i - 1) * rowHeight)
+
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", lootSpecPopup, "TOPLEFT", innerPadding, topY)
+        row:SetPoint("TOPRIGHT", lootSpecPopup, "TOPRIGHT", -innerPadding, topY)
+        row:SetHeight(rowHeight - 2)
+
+        row.text:SetText(entries[i].text)
+        SetLootSpecPopupRowSelected(row, entries[i].selected)
+        row:SetScript("OnClick", entries[i].onClick)
+        row:Show()
+    end
+
+    for i = #entries + 1, #lootSpecPopup.rows do
+        lootSpecPopup.rows[i]:Hide()
+    end
+
+    if lootSpecPopup:IsShown() then
+        PositionLootSpecPopup()
+    end
+end
+
+local function OpenLootSpecPopup()
+    EnsureLootSpecPopup()
+    lootSpecPopup.anchorButton = mainButton
+    lootSpecPopup._mouseWasDown = false
+    RefreshLootSpecPopup()
+    PositionLootSpecPopup()
+    lootSpecPopup:Show()
+end
+
+local function HandleMainButtonRightClick()
+    local action = GetRightClickAction()
+
+    if action == "settings" then
+        OpenSettings()
+        return
+    end
+
+    if action == "talents" then
+        OpenTalents()
+        return
+    end
+
+    if action == "lootspec" then
+        OpenLootSpecPopup()
+        return
+    end
+
+    HideLootSpecPopup()
+end
+
 local function GetMainButtonRightClickTooltipText()
     local action = GetRightClickAction()
 
@@ -404,6 +740,10 @@ local function GetMainButtonRightClickTooltipText()
 
     if action == "talents" then
         return "Right click to open talents"
+    end
+
+    if action == "lootspec" then
+        return "Right click to change loot specialization"
     end
 
     return ""
@@ -567,10 +907,6 @@ local function CreateLootCheckbox(button)
     box.bg:SetAllPoints()
     box.bg:SetColorTexture(0.02, 0.02, 0.02, 0.85)
 
-    box.border = box:CreateTexture(nil, "BORDER")
-    box.border:SetAllPoints()
-    box.border:SetTexture("Interface\\Buttons\\UI-Quickslot2")
-
     box.check = box:CreateTexture(nil, "OVERLAY")
     box.check:SetPoint("TOPLEFT", box, "TOPLEFT", 1, -1)
     box.check:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -1, 1)
@@ -661,7 +997,7 @@ local function CreateSpecButton(parent, name)
             GameTooltip_Hide()
         end
 
-        if not MouseIsOver(widget) then
+        if not IsMouseOverReSpecUI() then
             BeginDelayedCollapse()
         end
     end)
@@ -682,6 +1018,7 @@ local function CreateSpecButton(parent, name)
 
     button:SetScript("OnClick", function(self)
         if self.specData and self.specData.specIndex ~= GetCurrentSpecIndex() then
+            HideLootSpecPopup()
             SwitchToSpec(self.specData.specIndex)
         end
     end)
@@ -872,7 +1209,7 @@ local function EnsureUI()
             widget.isDragging = false
             SavePosition(widget)
 
-            if not MouseIsOver(widget) then
+            if not IsMouseOverReSpecUI() then
                 BeginDelayedCollapse()
             end
         end
@@ -891,6 +1228,7 @@ local function EnsureUI()
     widget:SetScript("OnUpdate", function(self, elapsed)
         if self.isDragging then
             GameTooltip_Hide()
+            HideLootSpecPopup()
 
             local scale = UIParent:GetEffectiveScale()
             local cursorX, cursorY = GetCursorPosition()
@@ -904,9 +1242,10 @@ local function EnsureUI()
             self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", newCenterX, newCenterY)
         end
 
-        if self.collapseAt and not self.isHovered and not MouseIsOver(self) and GetTime() >= self.collapseAt then
+        if self.collapseAt and not self.isHovered and not IsMouseOverReSpecUI() and GetTime() >= self.collapseAt then
             self.targetExpanded = false
             self.collapseAt = nil
+            HideLootSpecPopup()
         end
 
         local _, maxSecondarySpan = GetAxisSizes(self.secondaryCount)
@@ -948,6 +1287,7 @@ UpdateSpecs = function()
     end
 
     if ShouldHideInCombat() and InCombatLockdown() then
+        HideLootSpecPopup()
         widget:Hide()
         return
     end
@@ -956,6 +1296,7 @@ UpdateSpecs = function()
     local currentSpec = GetCurrentSpecIndex()
 
     if #specs <= 1 then
+        HideLootSpecPopup()
         widget:Hide()
         return
     end
@@ -975,6 +1316,7 @@ UpdateSpecs = function()
     ApplyInactiveSpecOrder(inactiveSpecs)
 
     if not activeSpec then
+        HideLootSpecPopup()
         widget:Hide()
         return
     end
@@ -1012,6 +1354,7 @@ UpdateSpecs = function()
 
     LayoutStatic()
     RefreshLootSpecCheckboxes()
+    RefreshLootSpecPopup()
 
     widget.currentAlpha = ComputeWidgetAlpha(widget.isHovered)
     widget:SetAlpha(widget.currentAlpha)
@@ -1037,6 +1380,7 @@ function ReSpec_RefreshLayout()
     widget.isDragging = false
 
     GameTooltip_Hide()
+    HideLootSpecPopup()
 
     widget:SetSize(size + (HOVER_PADDING * 2), size + (HOVER_PADDING * 2))
     mainButton:SetSize(size, size)
@@ -1077,15 +1421,19 @@ addon:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_SPECIALIZATION_CHANGED" then
         UpdateVisibility()
         RefreshLootSpecCheckboxes()
+        RefreshLootSpecPopup()
         return
     end
 
     if event == "PLAYER_LOOT_SPEC_UPDATED" then
         RefreshLootSpecCheckboxes()
+        RefreshLootSpecPopup()
         return
     end
 
     if event == "PLAYER_REGEN_DISABLED" then
+        HideLootSpecPopup()
+
         if widget and ShouldHideInCombat() then
             widget:Hide()
         end
