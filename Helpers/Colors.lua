@@ -39,6 +39,7 @@ function C.ApplyTexture(texture, color)
     if not texture or not color then
         return
     end
+
     texture:SetColorTexture(unpack(color))
 end
 
@@ -46,5 +47,6 @@ function C.ApplyText(fontString, color)
     if not fontString or not color then
         return
     end
+
     fontString:SetTextColor(unpack(color))
 end

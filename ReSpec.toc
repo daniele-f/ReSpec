@@ -4,10 +4,12 @@
 ## Author: BlueRaven
 ## Version: 0.0.3
 ## IconTexture: Interface/macroframe/macroframe-icon
-## LoadWith: Blizzard_UIDropDownMenu
 ## SavedVariables: ReSpecDB
 
 Helpers/Colors.lua
+Helpers/Core.lua
+UI/LootSpecPopup.lua
+UI/Widget.lua
 ReSpecDB.lua
-Settings.lua
 ReSpec.lua
+Settings.lua

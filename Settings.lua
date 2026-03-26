@@ -3,6 +3,10 @@ ReSpecSettingsCategory = nil
 
 local C = ReSpec.Colors
 
+-- ======================================================
+-- LABELS / DISPLAY TEXT
+-- ======================================================
+
 local directionLabels = {
     left = "Left",
     right = "Right",
@@ -17,6 +21,10 @@ local rightClickActionLabels = {
     nothing = "Do nothing",
 }
 
+-- ======================================================
+-- LAYOUT CONSTANTS
+-- ======================================================
+
 local LEFT_MARGIN = 26
 local TOP_MARGIN = -24
 local SECTION_SPACING = 26
@@ -26,10 +34,18 @@ local LABEL_WIDTH = 220
 local DROPDOWN_WIDTH = 180
 local CONTROL_OFFSET = LABEL_WIDTH + 16
 
+-- ======================================================
+-- LOCAL STATE
+-- ======================================================
+
 local settingsRows = {}
 local settingsPanel = nil
 local settingsSubtitle = nil
 local settingsContentRoot = nil
+
+-- ======================================================
+-- BASIC HELPERS
+-- ======================================================
 
 local function EnsureDB()
     ReSpec_EnsureDB()
@@ -50,11 +66,18 @@ local function Clamp(value, minValue, maxValue)
     if value < minValue then
         return minValue
     end
+
     if value > maxValue then
         return maxValue
     end
+
     return value
 end
+
+-- ======================================================
+-- SEARCHABLE SETTINGS REGISTRATION
+-- These are used by Blizzard Settings search.
+-- ======================================================
 
 local function RegisterSearchableSettings(category)
     EnsureDB()
@@ -210,6 +233,11 @@ local function RegisterSearchableSettings(category)
     )
 end
 
+-- ======================================================
+-- TOP HEADER
+-- Title, subtitle, reset button
+-- ======================================================
+
 local function CreateHeader(panel)
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
     title:SetPoint("TOPLEFT", LEFT_MARGIN, TOP_MARGIN)
@@ -228,6 +256,11 @@ local function CreateHeader(panel)
 
     return subtitle
 end
+
+-- ======================================================
+-- GENERIC BUILDING BLOCKS
+-- Reusable helpers to build sections and rows
+-- ======================================================
 
 local function CreateSectionHeader(parent, anchor, text)
     local header = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -262,6 +295,11 @@ local function CreateGoldLabel(parent, text)
     label:SetText(text)
     return label
 end
+
+-- ======================================================
+-- ROW FACTORIES
+-- These build the actual setting controls
+-- ======================================================
 
 local function CreateCheckboxRow(parent, anchor, text, getValue, setValue)
     local row = CreateRow(parent, anchor, ROW_HEIGHT)
@@ -303,12 +341,14 @@ local function CreateDropdownRow(parent, anchor, text, options, getValue, setVal
 
     local function UpdateDropdownText()
         local current = getValue()
+
         for _, option in ipairs(options) do
             if option.value == current then
                 dropdown:SetDefaultText(option.label)
                 return
             end
         end
+
         dropdown:SetDefaultText("")
     end
 
@@ -513,6 +553,11 @@ local function CreateIndentedCheckboxRow(parent, anchor, text, isEnabled, getVal
     return RegisterSettingsRow(row)
 end
 
+-- ======================================================
+-- SECTION BUILDERS
+-- Each section groups related settings together
+-- ======================================================
+
 local function BuildGeneralSection(parent, anchor)
     local currentAnchor = CreateSectionHeader(parent, anchor, "General")
 
@@ -679,6 +724,11 @@ local function BuildGeneralSection(parent, anchor)
     return currentAnchor
 end
 
+-- ======================================================
+-- SETTINGS CONTENT BUILDING
+-- Main panel composition
+-- ======================================================
+
 local function BuildSettingsContent(panel, subtitle)
     local contentRoot = CreateFrame("Frame", nil, panel)
     contentRoot:SetAllPoints(panel)
@@ -706,6 +756,11 @@ local function RebuildSettingsContent()
     end
 end
 
+-- ======================================================
+-- RESET FLOW
+-- Reset DB + rebuild the visible settings UI
+-- ======================================================
+
 local function ResetSettings()
     ReSpec_ResetDB()
     RebuildSettingsContent()
@@ -724,6 +779,10 @@ StaticPopupDialogs["RESPEC_CONFIRM_RESET"] = {
     hideOnEscape = true,
     preferredIndex = 3,
 }
+
+-- ======================================================
+-- SETTINGS PANEL CREATION
+-- ======================================================
 
 local function CreateSettingsPanel()
     EnsureDB()
@@ -744,6 +803,11 @@ local function CreateSettingsPanel()
     return panel
 end
 
+-- ======================================================
+-- REGISTRATION
+-- Register the addon category into Blizzard Settings
+-- ======================================================
+
 local function RegisterSettings()
     EnsureDB()
 
@@ -755,6 +819,11 @@ local function RegisterSettings()
 
     ReSpecSettingsCategory = category
 end
+
+-- ======================================================
+-- EVENT BOOTSTRAP
+-- Register settings once on login
+-- ======================================================
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
