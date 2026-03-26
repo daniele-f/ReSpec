@@ -1,5 +1,6 @@
-local addonName = ...
+local addonName, ReSpec = ...
 local addon = CreateFrame("Frame")
+local C = ReSpec.Colors
 
 local widget
 local mainButton
@@ -388,16 +389,16 @@ local function UpdateLootSpecCheckbox(button)
 
     if state == "current" then
         button.lootCheck.check:Show()
-        button.lootCheck.bg:SetColorTexture(0.04, 0.16, 0.04, 0.95)
-        button.lootCheck.check:SetVertexColor(0.3, 1, 0.3, 1)
+        C.ApplyTexture(button.lootCheck.bg, C.BG_CHECKBOX_GREEN)
+        button.lootCheck.check:SetVertexColor(unpack(C.GREEN_FULL))
     elseif state == "explicit" then
         button.lootCheck.check:Show()
-        button.lootCheck.bg:SetColorTexture(0.18, 0.14, 0.03, 0.95)
-        button.lootCheck.check:SetVertexColor(1, 0.82, 0, 1)
+        C.ApplyTexture(button.lootCheck.bg, C.BG_CHECKBOX_GOLD)
+        button.lootCheck.check:SetVertexColor(unpack(C.GOLD_FULL))
     else
         button.lootCheck.check:Hide()
-        button.lootCheck.bg:SetColorTexture(0.02, 0.02, 0.02, 0.85)
-        button.lootCheck.check:SetVertexColor(1, 0.82, 0, 1)
+        C.ApplyTexture(button.lootCheck.bg, C.BG_DARK_SOFT)
+        button.lootCheck.check:SetVertexColor(unpack(C.GOLD_FULL))
     end
 end
 
@@ -469,8 +470,8 @@ local function EnsureLootSpecPopup()
         edgeFile = "Interface\\Buttons\\WHITE8X8",
         edgeSize = 1,
     })
-    lootSpecPopup:SetBackdropColor(0.01, 0.01, 0.01, 0.98)
-    lootSpecPopup:SetBackdropBorderColor(0.22, 0.22, 0.22, 1)
+    lootSpecPopup:SetBackdropColor(unpack(C.BG_POPUP_BACKDROP))
+    lootSpecPopup:SetBackdropBorderColor(unpack(C.BORDER_POPUP))
 
     lootSpecPopup.rows = {}
     lootSpecPopup.anchorButton = nil
@@ -502,82 +503,82 @@ local function CreateLootSpecPopupRow(parent, index)
 
     row.bg = row:CreateTexture(nil, "BACKGROUND")
     row.bg:SetAllPoints()
-    row.bg:SetColorTexture(0.01, 0.01, 0.01, 1)
+    C.ApplyTexture(row.bg, C.BG_DARK)
 
     row.separator = row:CreateTexture(nil, "BORDER")
     row.separator:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
     row.separator:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
     row.separator:SetHeight(1)
-    row.separator:SetColorTexture(0.20, 0.20, 0.20, 1)
+    C.ApplyTexture(row.separator, C.BORDER_DIM)
 
     row.selectedBg = row:CreateTexture(nil, "ARTWORK")
     row.selectedBg:SetAllPoints()
-    row.selectedBg:SetColorTexture(0.18, 0.13, 0.02, 0.95)
+    C.ApplyTexture(row.selectedBg, C.BG_SELECTED)
     row.selectedBg:Hide()
 
     row.selectedTop = row:CreateTexture(nil, "OVERLAY")
     row.selectedTop:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
     row.selectedTop:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
     row.selectedTop:SetHeight(1)
-    row.selectedTop:SetColorTexture(1, 0.82, 0, 1)
+    C.ApplyTexture(row.selectedTop, C.GOLD_FULL)
     row.selectedTop:Hide()
 
     row.selectedBottom = row:CreateTexture(nil, "OVERLAY")
     row.selectedBottom:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
     row.selectedBottom:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
     row.selectedBottom:SetHeight(1)
-    row.selectedBottom:SetColorTexture(1, 0.82, 0, 1)
+    C.ApplyTexture(row.selectedBottom, C.GOLD_FULL)
     row.selectedBottom:Hide()
 
     row.selectedLeft = row:CreateTexture(nil, "OVERLAY")
     row.selectedLeft:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
     row.selectedLeft:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
     row.selectedLeft:SetWidth(1)
-    row.selectedLeft:SetColorTexture(1, 0.82, 0, 1)
+    C.ApplyTexture(row.selectedLeft, C.GOLD_FULL)
     row.selectedLeft:Hide()
 
     row.selectedRight = row:CreateTexture(nil, "OVERLAY")
     row.selectedRight:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
     row.selectedRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
     row.selectedRight:SetWidth(1)
-    row.selectedRight:SetColorTexture(1, 0.82, 0, 1)
+    C.ApplyTexture(row.selectedRight, C.GOLD_FULL)
     row.selectedRight:Hide()
 
     row.indicatorBg = row:CreateTexture(nil, "ARTWORK")
     row.indicatorBg:SetSize(12, 12)
     row.indicatorBg:SetPoint("LEFT", row, "LEFT", 10, 0)
     row.indicatorBg:SetTexture("Interface\\Buttons\\WHITE8X8")
-    row.indicatorBg:SetColorTexture(0.10, 0.10, 0.10, 1)
+    C.ApplyTexture(row.indicatorBg, C.INDICATOR_BG)
 
     row.indicatorBorderTop = row:CreateTexture(nil, "OVERLAY")
     row.indicatorBorderTop:SetPoint("TOPLEFT", row.indicatorBg, "TOPLEFT", 0, 0)
     row.indicatorBorderTop:SetPoint("TOPRIGHT", row.indicatorBg, "TOPRIGHT", 0, 0)
     row.indicatorBorderTop:SetHeight(1)
-    row.indicatorBorderTop:SetColorTexture(0.45, 0.45, 0.45, 1)
+    C.ApplyTexture(row.indicatorBorderTop, C.BORDER_LIGHT)
 
     row.indicatorBorderBottom = row:CreateTexture(nil, "OVERLAY")
     row.indicatorBorderBottom:SetPoint("BOTTOMLEFT", row.indicatorBg, "BOTTOMLEFT", 0, 0)
     row.indicatorBorderBottom:SetPoint("BOTTOMRIGHT", row.indicatorBg, "BOTTOMRIGHT", 0, 0)
     row.indicatorBorderBottom:SetHeight(1)
-    row.indicatorBorderBottom:SetColorTexture(0.45, 0.45, 0.45, 1)
+    C.ApplyTexture(row.indicatorBorderBottom, C.BORDER_LIGHT)
 
     row.indicatorBorderLeft = row:CreateTexture(nil, "OVERLAY")
     row.indicatorBorderLeft:SetPoint("TOPLEFT", row.indicatorBg, "TOPLEFT", 0, 0)
     row.indicatorBorderLeft:SetPoint("BOTTOMLEFT", row.indicatorBg, "BOTTOMLEFT", 0, 0)
     row.indicatorBorderLeft:SetWidth(1)
-    row.indicatorBorderLeft:SetColorTexture(0.45, 0.45, 0.45, 1)
+    C.ApplyTexture(row.indicatorBorderLeft, C.BORDER_LIGHT)
 
     row.indicatorBorderRight = row:CreateTexture(nil, "OVERLAY")
     row.indicatorBorderRight:SetPoint("TOPRIGHT", row.indicatorBg, "TOPRIGHT", 0, 0)
     row.indicatorBorderRight:SetPoint("BOTTOMRIGHT", row.indicatorBg, "BOTTOMRIGHT", 0, 0)
     row.indicatorBorderRight:SetWidth(1)
-    row.indicatorBorderRight:SetColorTexture(0.45, 0.45, 0.45, 1)
+    C.ApplyTexture(row.indicatorBorderRight, C.BORDER_LIGHT)
 
     row.indicatorDot = row:CreateTexture(nil, "OVERLAY")
     row.indicatorDot:SetSize(6, 6)
     row.indicatorDot:SetPoint("CENTER", row.indicatorBg, "CENTER", 0, 0)
     row.indicatorDot:SetTexture("Interface\\Buttons\\WHITE8X8")
-    row.indicatorDot:SetColorTexture(1, 0.82, 0, 1)
+    C.ApplyTexture(row.indicatorDot, C.GOLD_FULL)
     row.indicatorDot:Hide()
 
     row.text = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
@@ -587,13 +588,13 @@ local function CreateLootSpecPopupRow(parent, index)
 
     row:SetScript("OnEnter", function(self)
         if not self.isSelected then
-            self.bg:SetColorTexture(0.05, 0.05, 0.05, 1)
+            C.ApplyTexture(self.bg, C.BG_HOVER)
         end
     end)
 
     row:SetScript("OnLeave", function(self)
         if not self.isSelected then
-            self.bg:SetColorTexture(0.01, 0.01, 0.01, 1)
+            C.ApplyTexture(self.bg, C.BG_DARK)
         end
     end)
 
@@ -611,14 +612,14 @@ local function SetLootSpecPopupRowSelected(row, isSelected)
         row.selectedLeft:Show()
         row.selectedRight:Show()
 
-        row.indicatorBg:SetColorTexture(0.16, 0.12, 0.02, 1)
-        row.indicatorBorderTop:SetColorTexture(1, 0.82, 0, 1)
-        row.indicatorBorderBottom:SetColorTexture(1, 0.82, 0, 1)
-        row.indicatorBorderLeft:SetColorTexture(1, 0.82, 0, 1)
-        row.indicatorBorderRight:SetColorTexture(1, 0.82, 0, 1)
+        C.ApplyTexture(row.indicatorBg, C.BG_SELECTED_INDICATOR)
+        C.ApplyTexture(row.indicatorBorderTop, C.GOLD_FULL)
+        C.ApplyTexture(row.indicatorBorderBottom, C.GOLD_FULL)
+        C.ApplyTexture(row.indicatorBorderLeft, C.GOLD_FULL)
+        C.ApplyTexture(row.indicatorBorderRight, C.GOLD_FULL)
         row.indicatorDot:Show()
 
-        row.text:SetTextColor(1, 1, 1)
+        row.text:SetTextColor(unpack(C.WHITE))
     else
         row.selectedBg:Hide()
         row.selectedTop:Hide()
@@ -626,14 +627,14 @@ local function SetLootSpecPopupRowSelected(row, isSelected)
         row.selectedLeft:Hide()
         row.selectedRight:Hide()
 
-        row.indicatorBg:SetColorTexture(0.10, 0.10, 0.10, 1)
-        row.indicatorBorderTop:SetColorTexture(0.45, 0.45, 0.45, 1)
-        row.indicatorBorderBottom:SetColorTexture(0.45, 0.45, 0.45, 1)
-        row.indicatorBorderLeft:SetColorTexture(0.45, 0.45, 0.45, 1)
-        row.indicatorBorderRight:SetColorTexture(0.45, 0.45, 0.45, 1)
+        C.ApplyTexture(row.indicatorBg, C.INDICATOR_BG)
+        C.ApplyTexture(row.indicatorBorderTop, C.BORDER_LIGHT)
+        C.ApplyTexture(row.indicatorBorderBottom, C.BORDER_LIGHT)
+        C.ApplyTexture(row.indicatorBorderLeft, C.BORDER_LIGHT)
+        C.ApplyTexture(row.indicatorBorderRight, C.BORDER_LIGHT)
         row.indicatorDot:Hide()
 
-        row.text:SetTextColor(0.95, 0.95, 0.95)
+        row.text:SetTextColor(unpack(C.WHITE_SOFT))
     end
 end
 
@@ -834,7 +835,7 @@ local function CreateShadow(parent)
     local shadow = parent:CreateTexture(nil, "BACKGROUND", nil, -1)
     shadow:SetPoint("TOPLEFT", 4, -4)
     shadow:SetPoint("BOTTOMRIGHT", -4, 4)
-    shadow:SetColorTexture(0, 0, 0, 0.45)
+    C.ApplyTexture(shadow, C.SHADOW)
     return shadow
 end
 
@@ -846,7 +847,7 @@ local function UpdateButtonVisual(button, isActive, isMain)
 
         if button.border then
             button.border:SetScale(1.0)
-            button.border:SetVertexColor(1, 1, 1, 1)
+            button.border:SetVertexColor(unpack(C.WHITE))
         end
     else
         button.hoverInnerGlow:Hide()
@@ -855,7 +856,7 @@ local function UpdateButtonVisual(button, isActive, isMain)
 
         if button.border then
             button.border:SetScale(1.0)
-            button.border:SetVertexColor(1, 1, 1, 1)
+            button.border:SetVertexColor(unpack(C.WHITE))
         end
     end
 end
@@ -870,7 +871,7 @@ local function UpdateButtonHoverVisual(button, isHovered)
     if isCurrentSpec then
         button.hoverInnerGlow:Hide()
         if button.border then
-            button.border:SetVertexColor(1, 1, 1, 1)
+            button.border:SetVertexColor(unpack(C.WHITE))
         end
         return
     end
@@ -880,7 +881,7 @@ local function UpdateButtonHoverVisual(button, isHovered)
         button.icon:SetAlpha(1)
 
         if button.border then
-            button.border:SetVertexColor(1, 0.82, 0, 1)
+            button.border:SetVertexColor(unpack(C.GOLD_FULL))
             button.border:SetScale(1.06)
         end
     else
@@ -888,7 +889,7 @@ local function UpdateButtonHoverVisual(button, isHovered)
         button.icon:SetAlpha(0.88)
 
         if button.border then
-            button.border:SetVertexColor(1, 1, 1, 1)
+            button.border:SetVertexColor(unpack(C.WHITE))
             button.border:SetScale(1.0)
         end
     end
@@ -905,13 +906,13 @@ local function CreateLootCheckbox(button)
 
     box.bg = box:CreateTexture(nil, "BACKGROUND")
     box.bg:SetAllPoints()
-    box.bg:SetColorTexture(0.02, 0.02, 0.02, 0.85)
+    C.ApplyTexture(box.bg, C.BG_DARK_SOFT)
 
     box.check = box:CreateTexture(nil, "OVERLAY")
     box.check:SetPoint("TOPLEFT", box, "TOPLEFT", 1, -1)
     box.check:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -1, 1)
     box.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
-    box.check:SetVertexColor(1, 0.82, 0, 1)
+    box.check:SetVertexColor(unpack(C.GOLD_FULL))
     box.check:Hide()
 
     box:SetScript("OnEnter", function(self)
@@ -945,7 +946,7 @@ local function CreateSpecButton(parent, name)
 
     button.bg = button:CreateTexture(nil, "BACKGROUND")
     button.bg:SetAllPoints()
-    button.bg:SetColorTexture(0.08, 0.07, 0.06, 0.92)
+    C.ApplyTexture(button.bg, C.BG_BUTTON)
 
     button.border = button:CreateTexture(nil, "BORDER")
     button.border:SetAllPoints()
@@ -958,19 +959,19 @@ local function CreateSpecButton(parent, name)
 
     button.hoverGlow = button:CreateTexture(nil, "OVERLAY")
     button.hoverGlow:SetAllPoints()
-    button.hoverGlow:SetColorTexture(1, 1, 1, 0.05)
+    C.ApplyTexture(button.hoverGlow, C.HOVER_OVERLAY)
     button.hoverGlow:Hide()
 
     button.hoverInnerGlow = button:CreateTexture(nil, "OVERLAY", nil, 1)
     button.hoverInnerGlow:SetPoint("TOPLEFT", button.icon, -1, 1)
     button.hoverInnerGlow:SetPoint("BOTTOMRIGHT", button.icon, 1, -1)
-    button.hoverInnerGlow:SetColorTexture(1, 1, 1, 0.12)
+    C.ApplyTexture(button.hoverInnerGlow, C.HOVER_INNER)
     button.hoverInnerGlow:SetBlendMode("ADD")
     button.hoverInnerGlow:Hide()
 
     button.pushedShade = button:CreateTexture(nil, "OVERLAY")
     button.pushedShade:SetAllPoints()
-    button.pushedShade:SetColorTexture(0, 0, 0, 0.2)
+    C.ApplyTexture(button.pushedShade, C.PUSHED_SHADE)
     button.pushedShade:Hide()
 
     button.lootCheck = CreateLootCheckbox(button)
@@ -1048,7 +1049,7 @@ local function LayoutStatic()
     chevron:ClearAllPoints()
     chevron:SetAtlas("UI-HUD-ActionBar-Flyout")
     chevron:SetBlendMode("BLEND")
-    chevron:SetVertexColor(1, 1, 1, 1)
+    chevron:SetVertexColor(unpack(C.WHITE))
     chevron:SetRotation(0)
     chevron:SetSize(18, 7)
 
@@ -1218,7 +1219,7 @@ local function EnsureUI()
     chevron = mainButton:CreateTexture(nil, "OVERLAY", nil, 2)
     chevron:SetAtlas("UI-HUD-ActionBar-Flyout")
     chevron:SetBlendMode("BLEND")
-    chevron:SetVertexColor(1, 1, 1, 1)
+    chevron:SetVertexColor(unpack(C.WHITE))
 
     for i = 1, MAX_SECONDARY_BUTTONS do
         secondaryButtons[i] = CreateSpecButton(widget, "SecondaryButton" .. i)

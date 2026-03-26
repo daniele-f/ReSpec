@@ -1,5 +1,7 @@
-local addonName = ...
+local addonName, ReSpec = ...
 ReSpecSettingsCategory = nil
+
+local C = ReSpec.Colors
 
 local directionLabels = {
     left = "Left",
@@ -11,6 +13,7 @@ local directionLabels = {
 local rightClickActionLabels = {
     settings = "Open settings",
     talents = "Open talents",
+    lootspec = "Change loot spec",
     nothing = "Do nothing",
 }
 
@@ -232,7 +235,7 @@ local function CreateSectionHeader(parent, anchor, text)
     header:SetText(text)
 
     local divider = parent:CreateTexture(nil, "ARTWORK")
-    divider:SetColorTexture(1, 1, 1, 0.14)
+    C.ApplyTexture(divider, C.SETTINGS_DIVIDER)
     divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -8)
     divider:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -20, -8)
     divider:SetHeight(1)
@@ -255,7 +258,7 @@ end
 local function CreateGoldLabel(parent, text)
     local label = parent:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     label:SetJustifyH("LEFT")
-    label:SetTextColor(1, 0.82, 0)
+    C.ApplyText(label, C.SETTINGS_LABEL)
     label:SetText(text)
     return label
 end
@@ -568,6 +571,7 @@ local function BuildGeneralSection(parent, anchor)
         {
             { value = "settings", label = rightClickActionLabels.settings },
             { value = "talents",  label = rightClickActionLabels.talents },
+            { value = "lootspec", label = rightClickActionLabels.lootspec },
             { value = "nothing",  label = rightClickActionLabels.nothing },
         },
         function()
