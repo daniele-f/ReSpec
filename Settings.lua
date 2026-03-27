@@ -238,8 +238,13 @@ end
 -- ======================================================
 
 local function CreateHeader(panel)
+    local logo = panel:CreateTexture(nil, "ARTWORK")
+    logo:SetSize(42, 42)
+    logo:SetPoint("TOPLEFT", LEFT_MARGIN, TOP_MARGIN)
+    logo:SetTexture("Interface\\AddOns\\ReSpec\\Assets\\ReSpec_Icon.png")
+
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
-    title:SetPoint("TOPLEFT", LEFT_MARGIN, TOP_MARGIN)
+    title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
     title:SetText("ReSpec")
 
     local subtitle = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
