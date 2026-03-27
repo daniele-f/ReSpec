@@ -290,6 +290,13 @@ function ReSpec.RefreshLootSpecPopup()
         row.text:SetText(entries[i].text)
         ReSpec.SetLootSpecPopupRowSelected(row, entries[i].selected)
         row:SetScript("OnClick", entries[i].onClick)
+
+        if i == #entries then
+            row.separator:Hide()
+        else
+            row.separator:Show()
+        end
+
         row:Show()
     end
 
