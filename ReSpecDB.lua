@@ -10,7 +10,6 @@ local defaults = {
     fullOpacityOnHover = true,
     showTooltips = true,
     buttonSize = 42,
-    lootSpecEnabled = true,
     showLootSpecIcon = true,
 }
 

@@ -231,26 +231,10 @@ local function RegisterSearchableSettings(category)
             RefreshLayout()
         end
     )
-
-    Settings.RegisterProxySetting(
-        category,
-        "respec_loot_spec_enabled",
-        Settings.VarType.Boolean,
-        "Enable loot spec selector",
-        true,
-        function()
-            return ReSpecDB.lootSpecEnabled ~= false
-        end,
-        function(value)
-            ReSpecDB.lootSpecEnabled = value
-            RefreshLayout()
-        end
-    )
 end
 
 -- ======================================================
 -- TOP HEADER
--- Title, subtitle, reset button
 -- ======================================================
 
 local function CreateHeader(panel)
@@ -274,7 +258,6 @@ end
 
 -- ======================================================
 -- GENERIC BUILDING BLOCKS
--- Reusable helpers to build sections and rows
 -- ======================================================
 
 local function CreateSectionHeader(parent, anchor, text)
@@ -313,7 +296,6 @@ end
 
 -- ======================================================
 -- ROW FACTORIES
--- These build the actual setting controls
 -- ======================================================
 
 local function CreateCheckboxRow(parent, anchor, text, getValue, setValue)
@@ -570,7 +552,6 @@ end
 
 -- ======================================================
 -- SECTION BUILDERS
--- Each section groups related settings together
 -- ======================================================
 
 local function BuildGeneralSection(parent, anchor)
@@ -641,20 +622,6 @@ local function BuildGeneralSection(parent, anchor)
         function(value)
             EnsureDB()
             ReSpecDB.rightClickAction = value
-        end
-    )
-
-    currentAnchor = CreateCheckboxRow(
-        parent,
-        currentAnchor,
-        "Enable loot spec selector",
-        function()
-            EnsureDB()
-            return ReSpecDB.lootSpecEnabled ~= false
-        end,
-        function(value)
-            EnsureDB()
-            ReSpecDB.lootSpecEnabled = value
         end
     )
 
@@ -755,7 +722,6 @@ end
 
 -- ======================================================
 -- SETTINGS CONTENT BUILDING
--- Main panel composition
 -- ======================================================
 
 local function BuildSettingsContent(panel, subtitle)
@@ -787,7 +753,6 @@ end
 
 -- ======================================================
 -- RESET FLOW
--- Reset DB + rebuild the visible settings UI
 -- ======================================================
 
 local function ResetSettings()
@@ -834,7 +799,6 @@ end
 
 -- ======================================================
 -- REGISTRATION
--- Register the addon category into Blizzard Settings
 -- ======================================================
 
 local function RegisterSettings()
@@ -851,7 +815,6 @@ end
 
 -- ======================================================
 -- EVENT BOOTSTRAP
--- Register settings once on login
 -- ======================================================
 
 local f = CreateFrame("Frame")

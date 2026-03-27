@@ -6,37 +6,8 @@ local K = ReSpec.Constants
 local LOOT_SPEC_CORNER_ICON_TEXTURE = "Interface\\AddOns\\ReSpec\\Assets\\lootbag"
 
 -- ======================================================
--- LOOT CHECKBOX UI
+-- LOOT SPEC ICON
 -- ======================================================
-
-function ReSpec.UpdateLootSpecCheckbox(button)
-    if not button or not button.lootCheck or not button.specData then
-        return
-    end
-
-    if not ReSpec.IsLootSpecSelectorEnabled() then
-        button.lootCheck:Hide()
-        return
-    end
-
-    button.lootCheck:Show()
-
-    local state = ReSpec.GetLootCheckboxState(button)
-
-    if state == "current" then
-        button.lootCheck.check:Show()
-        C.ApplyTexture(button.lootCheck.bg, C.BG_CHECKBOX_GREEN)
-        button.lootCheck.check:SetVertexColor(unpack(C.GREEN_FULL))
-    elseif state == "explicit" then
-        button.lootCheck.check:Show()
-        C.ApplyTexture(button.lootCheck.bg, C.BG_CHECKBOX_GOLD)
-        button.lootCheck.check:SetVertexColor(unpack(C.GOLD_FULL))
-    else
-        button.lootCheck.check:Hide()
-        C.ApplyTexture(button.lootCheck.bg, C.BG_DARK_SOFT)
-        button.lootCheck.check:SetVertexColor(unpack(C.GOLD_FULL))
-    end
-end
 
 function ReSpec.UpdateLootSpecIcon(button)
     if not button or not button.lootSpecIcon or not button.specData then
@@ -67,63 +38,6 @@ function ReSpec.RefreshLootSpecIcons()
             ReSpec.UpdateLootSpecIcon(button)
         end
     end
-end
-
-function ReSpec.RefreshLootSpecCheckboxes()
-    if S.mainButton and S.mainButton.specData then
-        ReSpec.UpdateLootSpecCheckbox(S.mainButton)
-    end
-
-    for i = 1, #S.secondaryButtons do
-        local button = S.secondaryButtons[i]
-        if button and button.specData then
-            ReSpec.UpdateLootSpecCheckbox(button)
-        end
-    end
-
-    ReSpec.RefreshLootSpecIcons()
-end
-
-function ReSpec.CreateLootCheckbox(button)
-    local box = CreateFrame("Button", nil, button)
-    local size = ReSpec.GetLootCheckboxSize()
-    local offset = ReSpec.GetLootCheckboxOffset()
-
-    box:SetSize(size, size)
-    box:SetPoint("TOPLEFT", button, "TOPLEFT", offset, -offset)
-    box:RegisterForClicks("LeftButtonUp")
-
-    box.bg = box:CreateTexture(nil, "BACKGROUND")
-    box.bg:SetAllPoints()
-    C.ApplyTexture(box.bg, C.BG_DARK_SOFT)
-
-    box.check = box:CreateTexture(nil, "OVERLAY")
-    box.check:SetPoint("TOPLEFT", box, "TOPLEFT", 1, -1)
-    box.check:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -1, 1)
-    box.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
-    box.check:SetVertexColor(unpack(C.GOLD_FULL))
-    box.check:Hide()
-
-    box:SetScript("OnEnter", function(self)
-        ReSpec.ShowLootSpecTooltip(self, button)
-    end)
-
-    box:SetScript("OnLeave", function()
-        GameTooltip_Hide()
-    end)
-
-    box:SetScript("OnClick", function(self)
-        ReSpec.SetLootSpecFromButton(button)
-        ReSpec.RefreshLootSpecCheckboxes()
-
-        if self:IsMouseOver() then
-            ReSpec.ShowLootSpecTooltip(self, button)
-        else
-            GameTooltip_Hide()
-        end
-    end)
-
-    return box
 end
 
 -- ======================================================
@@ -239,8 +153,6 @@ function ReSpec.CreateSpecButton(parent, name)
     button.lootSpecIcon:SetTexture(LOOT_SPEC_CORNER_ICON_TEXTURE)
     button.lootSpecIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
     button.lootSpecIcon:Hide()
-
-    button.lootCheck = ReSpec.CreateLootCheckbox(button)
 
     button:SetScript("OnEnter", function(self)
         ReSpec.BeginExpand()
@@ -409,14 +321,10 @@ function ReSpec.PositionSecondaryButtons(progress)
 
             if progress > 0.03 then
                 button:Show()
-                if ReSpec.IsLootSpecSelectorEnabled() then
-                    button.lootCheck:Show()
-                end
             else
                 button:Hide()
                 button.hoverGlow:Hide()
                 button.hoverInnerGlow:Hide()
-                button.lootCheck:Hide()
             end
         else
             button:Hide()
@@ -672,7 +580,6 @@ function ReSpec.UpdateSpecs()
             button:Hide()
             button.hoverGlow:Hide()
             button.hoverInnerGlow:Hide()
-            button.lootCheck:Hide()
             if button.lootSpecIcon then
                 button.lootSpecIcon:Hide()
             end
@@ -680,7 +587,7 @@ function ReSpec.UpdateSpecs()
     end
 
     ReSpec.LayoutStatic()
-    ReSpec.RefreshLootSpecCheckboxes()
+    ReSpec.RefreshLootSpecIcons()
     ReSpec.RefreshLootSpecPopup()
 
     S.widget.currentAlpha = ReSpec.ComputeWidgetAlpha(S.widget.isHovered)
@@ -698,8 +605,6 @@ function ReSpec_RefreshLayout()
 
     local db = ReSpec.GetDB()
     local size = ReSpec.GetButtonSize()
-    local lootBoxSize = ReSpec.GetLootCheckboxSize()
-    local lootBoxOffset = ReSpec.GetLootCheckboxOffset()
 
     S.widget.currentOffset = 0
     S.widget.targetExpanded = false
@@ -712,24 +617,10 @@ function ReSpec_RefreshLayout()
     S.widget:SetSize(size + (K.HOVER_PADDING * 2), size + (K.HOVER_PADDING * 2))
     S.mainButton:SetSize(size, size)
 
-    if S.mainButton.lootCheck then
-        S.mainButton.lootCheck:SetSize(lootBoxSize, lootBoxSize)
-        S.mainButton.lootCheck:ClearAllPoints()
-        S.mainButton.lootCheck:SetPoint("TOPLEFT", S.mainButton, "TOPLEFT", lootBoxOffset, -lootBoxOffset)
-    end
-
     UpdateLootSpecIconLayout(S.mainButton)
 
     for i = 1, #S.secondaryButtons do
         S.secondaryButtons[i]:SetSize(size, size)
-
-        if S.secondaryButtons[i].lootCheck then
-            S.secondaryButtons[i].lootCheck:SetSize(lootBoxSize, lootBoxSize)
-            S.secondaryButtons[i].lootCheck:ClearAllPoints()
-            S.secondaryButtons[i].lootCheck:SetPoint("TOPLEFT", S.secondaryButtons[i], "TOPLEFT", lootBoxOffset,
-                -lootBoxOffset)
-        end
-
         UpdateLootSpecIconLayout(S.secondaryButtons[i])
     end
 
@@ -738,5 +629,5 @@ function ReSpec_RefreshLayout()
 
     ReSpec.UpdateHoverArea()
     ReSpec.UpdateVisibility()
-    ReSpec.RefreshLootSpecCheckboxes()
+    ReSpec.RefreshLootSpecIcons()
 end

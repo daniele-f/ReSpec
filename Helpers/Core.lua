@@ -55,22 +55,8 @@ function ReSpec.GetButtonSize()
     return ReSpec.GetDB().buttonSize or K.DEFAULT_BUTTON_SIZE
 end
 
-function ReSpec.GetLootCheckboxSize()
-    local buttonSize = ReSpec.GetButtonSize()
-    return math.max(12, math.floor(buttonSize * 0.43 + 0.5))
-end
-
-function ReSpec.GetLootCheckboxOffset()
-    local buttonSize = ReSpec.GetButtonSize()
-    return math.max(1, math.floor(buttonSize * 0.05 + 0.5))
-end
-
 function ReSpec.ShouldShowTooltips()
     return ReSpec.GetDB().showTooltips ~= false
-end
-
-function ReSpec.IsLootSpecSelectorEnabled()
-    return ReSpec.GetDB().lootSpecEnabled ~= false and ReSpec.GetRightClickAction() ~= "lootspec"
 end
 
 function ReSpec.ShouldShowLootSpecIcon()
@@ -119,17 +105,6 @@ function ReSpec.IsMouseOverReSpecUI()
 
     if S.lootSpecPopup and S.lootSpecPopup:IsShown() and MouseIsOver(S.lootSpecPopup) then
         return true
-    end
-
-    if S.mainButton and S.mainButton.lootCheck and S.mainButton.lootCheck:IsShown() and MouseIsOver(S.mainButton.lootCheck) then
-        return true
-    end
-
-    for i = 1, #S.secondaryButtons do
-        local button = S.secondaryButtons[i]
-        if button and button.lootCheck and button.lootCheck:IsShown() and MouseIsOver(button.lootCheck) then
-            return true
-        end
     end
 
     return false
@@ -253,64 +228,6 @@ function ReSpec.GetDisplayedLootSpecID()
     return lootSpecMode
 end
 
-function ReSpec.IsCurrentSpecButton(button)
-    if not button or not button.specData then
-        return false
-    end
-
-    local currentSpec = ReSpec.GetSpecData(ReSpec.GetCurrentSpecIndex())
-    return currentSpec and currentSpec.specID == button.specData.specID
-end
-
-function ReSpec.GetLootCheckboxState(button)
-    if not button or not button.specData then
-        return "none"
-    end
-
-    local lootSpecMode = ReSpec.GetLootSpecMode()
-    local specID = button.specData.specID
-
-    if ReSpec.IsCurrentSpecButton(button) then
-        if lootSpecMode == 0 then
-            return "current"
-        end
-
-        if lootSpecMode == specID then
-            return "explicit"
-        end
-
-        return "none"
-    end
-
-    if lootSpecMode == specID then
-        return "explicit"
-    end
-
-    return "none"
-end
-
-function ReSpec.SetLootSpecFromButton(button)
-    if not button or not button.specData then
-        return
-    end
-
-    local specID = button.specData.specID
-    local lootSpecMode = ReSpec.GetLootSpecMode()
-
-    if ReSpec.IsCurrentSpecButton(button) then
-        if lootSpecMode == 0 then
-            SetLootSpecialization(specID)
-        elseif lootSpecMode == specID then
-            SetLootSpecialization(0)
-        else
-            SetLootSpecialization(specID)
-        end
-        return
-    end
-
-    SetLootSpecialization(specID)
-end
-
 -- ======================================================
 -- POSITION / VISIBILITY HELPERS
 -- ======================================================
@@ -423,32 +340,6 @@ function ReSpec.GetMainButtonRightClickTooltipText()
     end
 
     return ""
-end
-
-function ReSpec.ShowLootSpecTooltip(owner, button)
-    if not ReSpec.ShouldShowTooltips() or not button or not button.specData then
-        return
-    end
-
-    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-
-    local state = ReSpec.GetLootCheckboxState(button)
-
-    if state == "current" then
-        GameTooltip:SetText("Current loot specialization", 0.3, 1, 0.3)
-        GameTooltip:AddLine("Click to lock loot to this specialization.", 0.8, 0.8, 0.8, true)
-    elseif state == "explicit" then
-        if ReSpec.IsCurrentSpecButton(button) then
-            GameTooltip:SetText("Loot locked to this specialization", 1, 0.82, 0)
-            GameTooltip:AddLine("Click to switch back to Current Specialization.", 0.8, 0.8, 0.8, true)
-        else
-            GameTooltip:SetText("Current loot specialization", 1, 0.82, 0)
-        end
-    else
-        GameTooltip:SetText("Set loot specialization", 1, 1, 1)
-    end
-
-    GameTooltip:Show()
 end
 
 function ReSpec.ShowTooltip(button, specData)
