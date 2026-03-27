@@ -9,19 +9,19 @@ addon:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
         ReSpec.EnsureUI()
         ReSpec.UpdateVisibility()
-        ReSpec.RefreshLootSpecCheckboxes()
+        ReSpec.RefreshLootSpecIcons()
         return
     end
 
     if event == "PLAYER_SPECIALIZATION_CHANGED" then
         ReSpec.UpdateVisibility()
-        ReSpec.RefreshLootSpecCheckboxes()
+        ReSpec.RefreshLootSpecIcons()
         ReSpec.RefreshLootSpecPopup()
         return
     end
 
     if event == "PLAYER_LOOT_SPEC_UPDATED" then
-        ReSpec.RefreshLootSpecCheckboxes()
+        ReSpec.RefreshLootSpecIcons()
         ReSpec.RefreshLootSpecPopup()
         return
     end
@@ -37,7 +37,7 @@ addon:SetScript("OnEvent", function(_, event)
 
     if event == "PLAYER_REGEN_ENABLED" then
         ReSpec.UpdateVisibility()
-        ReSpec.RefreshLootSpecCheckboxes()
+        ReSpec.RefreshLootSpecIcons()
         return
     end
 end)

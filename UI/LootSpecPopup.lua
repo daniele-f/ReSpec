@@ -253,7 +253,7 @@ function ReSpec.RefreshLootSpecPopup()
         selected = lootSpecMode == 0,
         onClick = function()
             SetLootSpecialization(0)
-            ReSpec.RefreshLootSpecCheckboxes()
+            ReSpec.RefreshLootSpecIcons()
             ReSpec.RefreshLootSpecPopup()
         end,
     }
@@ -265,7 +265,7 @@ function ReSpec.RefreshLootSpecPopup()
             selected = lootSpecMode == spec.specID,
             onClick = function()
                 SetLootSpecialization(spec.specID)
-                ReSpec.RefreshLootSpecCheckboxes()
+                ReSpec.RefreshLootSpecIcons()
                 ReSpec.RefreshLootSpecPopup()
             end,
         }
