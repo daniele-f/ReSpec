@@ -27,12 +27,16 @@ local rightClickActionLabels = {
 
 local LEFT_MARGIN = 26
 local TOP_MARGIN = -24
-local SECTION_SPACING = 26
-local ROW_SPACING = 10
+local SECTION_SPACING = 18
+local ROW_SPACING = 6
 local ROW_HEIGHT = 34
 local LABEL_WIDTH = 220
 local DROPDOWN_WIDTH = 180
-local CONTROL_OFFSET = LABEL_WIDTH + 16
+local CONTROL_OFFSET = LABEL_WIDTH + 32
+
+local SECTION_HEADER_OFFSET = 0
+local ROW_INDENT = 16
+local RIGHT_PADDING = 20
 
 -- ======================================================
 -- LOCAL STATE
@@ -244,12 +248,20 @@ local function CreateHeader(panel)
     logo:SetTexture("Interface\\AddOns\\ReSpec\\Assets\\ReSpec_Icon.png")
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
-    title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
+    title:SetPoint("LEFT", logo, "RIGHT", 10, 2)
     title:SetText("ReSpec")
+    title:SetTextColor(1, 1, 1)
 
     local subtitle = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
+    subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     subtitle:SetText("Quick spec switching widget")
+    subtitle:SetTextColor(0.8, 0.8, 0.8)
+
+    local divider = panel:CreateTexture(nil, "ARTWORK")
+    C.ApplyTexture(divider, C.SETTINGS_DIVIDER)
+    divider:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", 0, -10)
+    divider:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -20, -10)
+    divider:SetHeight(1)
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(100, 30)
@@ -258,7 +270,7 @@ local function CreateHeader(panel)
 
     panel.ResetButton = resetButton
 
-    return subtitle
+    return divider
 end
 
 -- ======================================================
@@ -269,16 +281,17 @@ local function CreateSectionHeader(parent, anchor, text)
     local header = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     header:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -SECTION_SPACING)
     header:SetText(text)
+    header:SetTextColor(1, 1, 1)
 
-    local divider = parent:CreateTexture(nil, "ARTWORK")
-    C.ApplyTexture(divider, C.SETTINGS_DIVIDER)
-    divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -8)
-    divider:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -20, -8)
-    divider:SetHeight(1)
+    -- local divider = parent:CreateTexture(nil, "ARTWORK")
+    -- C.ApplyTexture(divider, C.SETTINGS_DIVIDER)
+    -- divider:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -6)
+    -- divider:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -20, -6)
+    -- divider:SetHeight(1)
 
     local nextAnchor = CreateFrame("Frame", nil, parent)
     nextAnchor:SetSize(1, 1)
-    nextAnchor:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 0, -4)
+    nextAnchor:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -2)
 
     return nextAnchor
 end
@@ -307,7 +320,7 @@ local function CreateCheckboxRow(parent, anchor, text, getValue, setValue)
     local row = CreateRow(parent, anchor, ROW_HEIGHT)
 
     local label = CreateGoldLabel(row, text)
-    label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    label:SetPoint("LEFT", row, "LEFT", 16, 0)
 
     local checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
     checkbox:SetPoint("LEFT", row, "LEFT", CONTROL_OFFSET, 0)
@@ -334,7 +347,7 @@ local function CreateDropdownRow(parent, anchor, text, options, getValue, setVal
     local row = CreateRow(parent, anchor, ROW_HEIGHT)
 
     local label = CreateGoldLabel(row, text)
-    label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    label:SetPoint("LEFT", row, "LEFT", 16, 0)
     label:SetWidth(LABEL_WIDTH)
 
     local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
@@ -382,7 +395,7 @@ local function CreateSliderRow(parent, anchor, text, minValue, maxValue, getValu
     local row = CreateRow(parent, anchor, ROW_HEIGHT)
 
     local label = CreateGoldLabel(row, text)
-    label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    label:SetPoint("LEFT", row, "LEFT", 16, 0)
     label:SetWidth(LABEL_WIDTH)
 
     local slider = CreateFrame("Frame", nil, row, "MinimalSliderWithSteppersTemplate")
@@ -436,7 +449,7 @@ local function CreateCheckboxSliderRow(parent, anchor, text, minValue, maxValue,
     local row = CreateRow(parent, anchor, ROW_HEIGHT)
 
     local label = CreateGoldLabel(row, text)
-    label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    label:SetPoint("LEFT", row, "LEFT", 16, 0)
     label:SetWidth(LABEL_WIDTH)
 
     local checkbox = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
@@ -559,8 +572,8 @@ end
 -- SECTION BUILDERS
 -- ======================================================
 
-local function BuildGeneralSection(parent, anchor)
-    local currentAnchor = CreateSectionHeader(parent, anchor, "General")
+local function BuildBehaviorSection(parent, anchor)
+    local currentAnchor = CreateSectionHeader(parent, anchor, "Behavior")
 
     currentAnchor = CreateCheckboxRow(
         parent,
@@ -573,6 +586,63 @@ local function BuildGeneralSection(parent, anchor)
         function(value)
             EnsureDB()
             ReSpecDB.hideInCombat = value
+        end
+    )
+
+    currentAnchor = CreateCheckboxRow(
+        parent,
+        currentAnchor,
+        "Show tooltips",
+        function()
+            EnsureDB()
+            return ReSpecDB.showTooltips ~= false
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.showTooltips = value
+        end
+    )
+
+    currentAnchor = CreateDropdownRow(
+        parent,
+        currentAnchor,
+        "Right click action",
+        {
+            { value = "settings", label = rightClickActionLabels.settings },
+            { value = "talents",  label = rightClickActionLabels.talents },
+            { value = "lootspec", label = rightClickActionLabels.lootspec },
+            { value = "nothing",  label = rightClickActionLabels.nothing },
+        },
+        function()
+            EnsureDB()
+            return ReSpecDB.rightClickAction or "settings"
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.rightClickAction = value
+        end
+    )
+
+    return currentAnchor
+end
+
+local function BuildAppearanceSection(parent, anchor)
+    local currentAnchor = CreateSectionHeader(parent, anchor, "Appearance")
+
+    currentAnchor = CreateSliderRow(
+        parent,
+        currentAnchor,
+        "Scale",
+        50,
+        150,
+        function()
+            EnsureDB()
+            local size = ReSpecDB.buttonSize or 42
+            return math.floor((size / 42) * 100 + 0.5)
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.buttonSize = math.floor((42 * value / 100) + 0.5)
         end
     )
 
@@ -610,26 +680,6 @@ local function BuildGeneralSection(parent, anchor)
         end
     )
 
-    currentAnchor = CreateDropdownRow(
-        parent,
-        currentAnchor,
-        "Right click",
-        {
-            { value = "settings", label = rightClickActionLabels.settings },
-            { value = "talents",  label = rightClickActionLabels.talents },
-            { value = "lootspec", label = rightClickActionLabels.lootspec },
-            { value = "nothing",  label = rightClickActionLabels.nothing },
-        },
-        function()
-            EnsureDB()
-            return ReSpecDB.rightClickAction or "settings"
-        end,
-        function(value)
-            EnsureDB()
-            ReSpecDB.rightClickAction = value
-        end
-    )
-
     currentAnchor = CreateCheckboxRow(
         parent,
         currentAnchor,
@@ -641,37 +691,6 @@ local function BuildGeneralSection(parent, anchor)
         function(value)
             EnsureDB()
             ReSpecDB.showLootSpecIcon = value
-        end
-    )
-
-    currentAnchor = CreateCheckboxRow(
-        parent,
-        currentAnchor,
-        "Show tooltips",
-        function()
-            EnsureDB()
-            return ReSpecDB.showTooltips ~= false
-        end,
-        function(value)
-            EnsureDB()
-            ReSpecDB.showTooltips = value
-        end
-    )
-
-    currentAnchor = CreateSliderRow(
-        parent,
-        currentAnchor,
-        "Scale",
-        50,
-        150,
-        function()
-            EnsureDB()
-            local size = ReSpecDB.buttonSize or 42
-            return math.floor((size / 42) * 100 + 0.5)
-        end,
-        function(value)
-            EnsureDB()
-            ReSpecDB.buttonSize = math.floor((42 * value / 100) + 0.5)
         end
     )
 
@@ -730,16 +749,29 @@ end
 -- ======================================================
 
 local function BuildSettingsContent(panel, subtitle)
-    local contentRoot = CreateFrame("Frame", nil, panel)
-    contentRoot:SetAllPoints(panel)
+    local scrollFrame = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", 0, -12)
+    scrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -30, 10)
 
-    local topAnchor = CreateFrame("Frame", nil, contentRoot)
+    if scrollFrame.ScrollBar then
+        scrollFrame.ScrollBar:Hide()
+        scrollFrame.ScrollBar:Disable()
+    end
+
+    local content = CreateFrame("Frame", nil, scrollFrame)
+    content:SetWidth(700)
+    content:SetHeight(1)
+
+    scrollFrame:SetScrollChild(content)
+
+    local topAnchor = CreateFrame("Frame", nil, content)
     topAnchor:SetSize(1, 1)
-    topAnchor:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", 0, 0)
+    topAnchor:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 
-    BuildGeneralSection(contentRoot, topAnchor)
+    local anchor = BuildBehaviorSection(content, topAnchor)
+    anchor = BuildAppearanceSection(content, anchor)
 
-    return contentRoot
+    return content
 end
 
 local function RebuildSettingsContent()
