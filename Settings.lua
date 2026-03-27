@@ -254,7 +254,7 @@ local function CreateHeader(panel)
 
     local subtitle = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
-    subtitle:SetText("Quick spec switching widget")
+    subtitle:SetText("Quick spec switching button")
     subtitle:SetTextColor(0.8, 0.8, 0.8)
 
     local divider = panel:CreateTexture(nil, "ARTWORK")
