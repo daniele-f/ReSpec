@@ -2,7 +2,7 @@
 ## Title: ReSpec
 ## Notes: Quick spec switching button
 ## Author: BlueRaven
-## Version: 1.0.0
+## Version: 1.0.1
 ## IconTexture: Interface\AddOns\ReSpec\Assets\ReSpec_Icon.png
 ## SavedVariables: ReSpecDB
 
