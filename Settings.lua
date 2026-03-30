@@ -235,6 +235,24 @@ local function RegisterSearchableSettings(category)
             RefreshLayout()
         end
     )
+
+    Settings.RegisterProxySetting(
+        category,
+        "respec_show_hero_spec_icon",
+        Settings.VarType.Boolean,
+        "Show Hero Talent instead",
+        false,
+        function()
+            return ReSpecDB.showHeroSpecIcon == true
+        end,
+        function(value)
+            ReSpecDB.showHeroSpecIcon = value
+            RefreshLayout()
+            if ReSpec.UpdateSpecs then
+                ReSpec.UpdateSpecs()
+            end
+        end
+    )
 end
 
 -- ======================================================
@@ -677,6 +695,23 @@ local function BuildAppearanceSection(parent, anchor)
         function(value)
             EnsureDB()
             ReSpecDB.reverseOrder = value
+        end
+    )
+
+    currentAnchor = CreateCheckboxRow(
+        parent,
+        currentAnchor,
+        "Show Hero Talent instead",
+        function()
+            EnsureDB()
+            return ReSpecDB.showHeroSpecIcon == true
+        end,
+        function(value)
+            EnsureDB()
+            ReSpecDB.showHeroSpecIcon = value
+            if ReSpec.UpdateSpecs then
+                ReSpec.UpdateSpecs()
+            end
         end
     )
 

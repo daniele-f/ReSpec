@@ -40,6 +40,16 @@ addon:SetScript("OnEvent", function(_, event)
         ReSpec.RefreshLootSpecIcons()
         return
     end
+    if event == "TRAIT_CONFIG_UPDATED" then
+        ReSpec.UpdateVisibility()
+        ReSpec.RefreshLootSpecIcons()
+        ReSpec.RefreshLootSpecPopup()
+
+        if ReSpec.UpdateSpecs then
+            ReSpec.UpdateSpecs()
+        end
+        return
+    end
 end)
 
 addon:RegisterEvent("PLAYER_LOGIN")
@@ -47,6 +57,7 @@ addon:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 addon:RegisterEvent("PLAYER_LOOT_SPEC_UPDATED")
 addon:RegisterEvent("PLAYER_REGEN_DISABLED")
 addon:RegisterEvent("PLAYER_REGEN_ENABLED")
+addon:RegisterEvent("TRAIT_CONFIG_UPDATED")
 
 -- ======================================================
 -- SLASH COMMANDS

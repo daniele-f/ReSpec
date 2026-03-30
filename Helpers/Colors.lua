@@ -22,7 +22,9 @@ C.BORDER_POPUP = { 0.22, 0.22, 0.22, 1 }
 
 C.GOLD = { 1, 0.82, 0 }
 C.GOLD_FULL = { 1, 0.82, 0, 1 }
+C.RED_FULL = { 1, 0.30, 0.30, 1 }
 C.GREEN_FULL = { 0.30, 1, 0.30, 1 }
+C.BLUE_FULL = { 0.30, 0.30, 1, 1 }
 C.WHITE = { 1, 1, 1, 1 }
 C.WHITE_SOFT = { 0.95, 0.95, 0.95, 1 }
 C.WHITE_DIM = { 0.70, 0.70, 0.70, 1 }

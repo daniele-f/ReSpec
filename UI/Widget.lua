@@ -52,6 +52,26 @@ function ReSpec.RefreshLootSpecIcons()
     end
 end
 
+local function SetButtonIcon(button, iconData)
+    if not button or not button.icon then
+        return
+    end
+
+    button.icon:ClearAllPoints()
+    button.icon:SetPoint("TOPLEFT", 5, -5)
+    button.icon:SetPoint("BOTTOMRIGHT", -5, 5)
+
+    if iconData and iconData.atlas then
+        button.icon:SetTexture(nil)
+        button.icon:SetAtlas(iconData.atlas, true)
+        button.icon:SetTexCoord(0, 1, 0, 1)
+    else
+        button.icon:SetAtlas(nil)
+        button.icon:SetTexture((iconData and iconData.texture) or 134400)
+        button.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    end
+end
+
 -- ======================================================
 -- VISUAL HELPERS
 -- ======================================================
@@ -566,7 +586,14 @@ function ReSpec.UpdateSpecs()
     end
 
     S.mainButton.specData = activeSpec
-    S.mainButton.icon:SetTexture(activeSpec.icon or 134400)
+
+    local heroSpecInfo = ReSpec.GetActiveHeroSpecInfo()
+    if heroSpecInfo and heroSpecInfo.atlas then
+        SetButtonIcon(S.mainButton, { atlas = heroSpecInfo.atlas })
+    else
+        SetButtonIcon(S.mainButton, { texture = activeSpec.icon or 134400 })
+    end
+
     ReSpec.UpdateButtonVisual(S.mainButton, true, true)
     S.mainButton:Show()
 
@@ -578,7 +605,7 @@ function ReSpec.UpdateSpecs()
 
         if spec and i <= K.MAX_SECONDARY_BUTTONS then
             button.specData = spec
-            button.icon:SetTexture(spec.icon or 134400)
+            SetButtonIcon(button, { texture = spec.icon or 134400 })
             ReSpec.UpdateButtonVisual(button, false, false)
             button:SetAlpha(0)
 

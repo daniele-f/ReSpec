@@ -11,6 +11,7 @@ local defaults = {
     showTooltips = true,
     buttonSize = 42,
     showLootSpecIcon = true,
+    showHeroSpecIcon = false,
 }
 
 local function ApplyDefaultPosition()

@@ -228,6 +228,79 @@ function ReSpec.GetDisplayedLootSpecID()
     return lootSpecMode
 end
 
+function ReSpec.ShouldShowHeroSpecIcon()
+    return ReSpec.GetDB().showHeroSpecIcon == true
+end
+
+function ReSpec.GetActiveHeroSpecID()
+    if C_ClassTalents and C_ClassTalents.GetActiveHeroTalentSpec then
+        local heroSpecID = C_ClassTalents.GetActiveHeroTalentSpec()
+        if heroSpecID and heroSpecID > 0 then
+            return heroSpecID
+        end
+    end
+
+    -- Fallback scan, just in case
+    if not (C_ClassTalents and C_ClassTalents.GetActiveConfigID and C_Traits and C_Traits.GetConfigInfo and C_Traits.GetTreeNodes and C_Traits.GetNodeInfo and C_Traits.GetEntryInfo) then
+        return nil
+    end
+
+    local configID = C_ClassTalents.GetActiveConfigID()
+    if not configID then
+        return nil
+    end
+
+    local configInfo = C_Traits.GetConfigInfo(configID)
+    if not configInfo or not configInfo.treeIDs then
+        return nil
+    end
+
+    for _, treeID in ipairs(configInfo.treeIDs) do
+        local nodeIDs = C_Traits.GetTreeNodes(treeID)
+        if nodeIDs then
+            for _, nodeID in ipairs(nodeIDs) do
+                local nodeInfo = C_Traits.GetNodeInfo(configID, nodeID)
+                if nodeInfo and nodeInfo.activeEntry and nodeInfo.activeEntry.entryID then
+                    local entryInfo = C_Traits.GetEntryInfo(configID, nodeInfo.activeEntry.entryID)
+                    if entryInfo and entryInfo.subTreeID then
+                        return entryInfo.subTreeID
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+function ReSpec.GetActiveHeroSpecInfo()
+    if not ReSpec.ShouldShowHeroSpecIcon() then
+        return nil
+    end
+
+    if not (C_ClassTalents and C_ClassTalents.GetActiveConfigID and C_Traits and C_Traits.GetSubTreeInfo) then
+        return nil
+    end
+
+    local configID = C_ClassTalents.GetActiveConfigID()
+    local heroSpecID = ReSpec.GetActiveHeroSpecID()
+
+    if not configID or not heroSpecID then
+        return nil
+    end
+
+    local subTreeInfo = C_Traits.GetSubTreeInfo(configID, heroSpecID)
+    if not subTreeInfo then
+        return nil
+    end
+
+    return {
+        id = heroSpecID,
+        name = subTreeInfo.name,
+        atlas = subTreeInfo.iconElementID,
+    }
+end
+
 -- ======================================================
 -- POSITION / VISIBILITY HELPERS
 -- ======================================================
