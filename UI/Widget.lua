@@ -19,9 +19,21 @@ function ReSpec.UpdateLootSpecIcon(button)
         return
     end
 
+    local lootSpecID = GetLootSpecialization()
+    local isCurrentMode = (lootSpecID == 0)
+
     local displayedLootSpecID = ReSpec.GetDisplayedLootSpecID()
+
     if displayedLootSpecID == button.specData.specID then
         button.lootSpecIcon:Show()
+
+        if isCurrentMode then
+            -- Dynamic mode → GREEN
+            button.lootSpecIcon:SetVertexColor(unpack(ReSpec.Colors.GREEN_FULL))
+        else
+            -- Fixed mode → NORMAL
+            button.lootSpecIcon:SetVertexColor(1, 1, 1, 1)
+        end
     else
         button.lootSpecIcon:Hide()
     end
