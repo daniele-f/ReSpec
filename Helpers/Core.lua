@@ -420,6 +420,12 @@ function ReSpec.GetMainButtonRightClickTooltipText()
     return ""
 end
 
+local ROLE_ICONS = {
+    TANK = "roleicon-tiny-tank",
+    HEALER = "roleicon-tiny-healer",
+    DAMAGER = "roleicon-tiny-dps",
+}
+
 function ReSpec.ShowTooltip(button, specData)
     if not ReSpec.ShouldShowTooltips() then
         return
@@ -450,7 +456,16 @@ function ReSpec.ShowTooltip(button, specData)
         end
     end
 
-    GameTooltip:AddLine(specData.name or UNKNOWN, 1, 0.82, 0)
+    local role = GetSpecializationRole(specData.specIndex)
+    local roleAtlas = ROLE_ICONS[role]
+
+    if roleAtlas then
+        local icon = CreateAtlasMarkup(roleAtlas, 16, 16)
+        GameTooltip:AddLine(icon .. " " .. (specData.name or UNKNOWN), 1, 0.82, 0)
+    else
+        GameTooltip:AddLine(specData.name or UNKNOWN, 1, 0.82, 0)
+    end
+
     GameTooltip:AddLine(" ")
 
     if specData.specIndex == ReSpec.GetCurrentSpecIndex() then
