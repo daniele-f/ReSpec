@@ -7,6 +7,9 @@ local addon = CreateFrame("Frame")
 
 addon:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
+        if ReSpec.State then
+            ReSpec.State.isInCombat = InCombatLockdown()
+        end
         ReSpec.EnsureUI()
         ReSpec.UpdateVisibility()
         ReSpec.RefreshLootSpecIcons()
@@ -27,15 +30,24 @@ addon:SetScript("OnEvent", function(_, event)
     end
 
     if event == "PLAYER_REGEN_DISABLED" then
+        if ReSpec.State then
+            ReSpec.State.isInCombat = true
+        end
         ReSpec.HideLootSpecPopup()
 
         if ReSpec.State and ReSpec.State.widget and ReSpec.ShouldHideInCombat() then
             ReSpec.State.widget:Hide()
+        elseif ReSpec.UpdateVisibility then
+            ReSpec.UpdateVisibility()
+            ReSpec.RefreshLootSpecIcons()
         end
         return
     end
 
     if event == "PLAYER_REGEN_ENABLED" then
+        if ReSpec.State then
+            ReSpec.State.isInCombat = false
+        end
         ReSpec.UpdateVisibility()
         ReSpec.RefreshLootSpecIcons()
         return

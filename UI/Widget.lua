@@ -85,8 +85,12 @@ function ReSpec.CreateShadow(parent)
 end
 
 function ReSpec.UpdateButtonVisual(button, isActive, isMain)
+    local inCombat = ReSpec.IsInCombat()
+
     if isActive then
         button.hoverInnerGlow:Hide()
+        button.icon:SetDesaturated(false)
+        button.icon:SetVertexColor(1, 1, 1, 1)
         button.icon:SetAlpha(1)
         button:SetScale(1.0)
 
@@ -96,17 +100,36 @@ function ReSpec.UpdateButtonVisual(button, isActive, isMain)
         end
     else
         button.hoverInnerGlow:Hide()
-        button.icon:SetAlpha(0.88)
         button:SetScale(isMain and 1.0 or K.SECONDARY_SCALE)
 
-        if button.border then
-            button.border:SetScale(1.0)
-            button.border:SetVertexColor(unpack(C.WHITE))
+        if inCombat then
+            button.icon:SetDesaturated(true)
+            button.icon:SetVertexColor(0.6, 0.6, 0.6, 1)
+            button.icon:SetAlpha(0.7)
+
+            if button.border then
+                button.border:SetVertexColor(unpack(C.WHITE_DIM))
+            end
+        else
+            button.icon:SetDesaturated(false)
+            button.icon:SetVertexColor(1, 1, 1, 1)
+            button.icon:SetAlpha(0.88)
+
+            if button.border then
+                button.border:SetVertexColor(unpack(C.WHITE))
+            end
         end
     end
 end
 
 function ReSpec.UpdateButtonHoverVisual(button, isHovered)
+    local inCombat = ReSpec.IsInCombat()
+
+    if inCombat then
+        button.hoverInnerGlow:Hide()
+        return
+    end
+
     if not button or not button.specData then
         return
     end
@@ -550,7 +573,7 @@ function ReSpec.UpdateSpecs()
         return
     end
 
-    if ReSpec.ShouldHideInCombat() and InCombatLockdown() then
+    if ReSpec.ShouldHideInCombat() and ReSpec.IsInCombat() then
         ReSpec.HideLootSpecPopup()
         S.widget:Hide()
         return

@@ -22,6 +22,7 @@ S.chevron = S.chevron or nil
 S.secondaryButtons = S.secondaryButtons or {}
 S.initialized = S.initialized or false
 S.lootSpecPopup = S.lootSpecPopup or nil
+S.isInCombat = S.isInCombat or false
 
 -- ======================================================
 -- DATABASE HELPERS
@@ -65,6 +66,10 @@ end
 
 function ReSpec.ShouldHideInCombat()
     return ReSpec.GetDB().hideInCombat == true
+end
+
+function ReSpec.IsInCombat()
+    return S.isInCombat == true or InCombatLockdown()
 end
 
 function ReSpec.ComputeWidgetAlpha(isHovered)
@@ -193,7 +198,7 @@ function ReSpec.SwitchToSpec(specIndex)
         return
     end
 
-    if InCombatLockdown() then
+    if ReSpec.IsInCombat() then
         UIErrorsFrame:AddMessage("Cannot change specialization in combat.", 1.0, 0.1, 0.1)
         return
     end
@@ -325,7 +330,7 @@ function ReSpec.UpdateVisibility()
         return
     end
 
-    if ReSpec.ShouldHideInCombat() and InCombatLockdown() then
+    if ReSpec.ShouldHideInCombat() and ReSpec.IsInCombat() then
         ReSpec.HideLootSpecPopup()
         S.widget:Hide()
         return
