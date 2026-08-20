@@ -83,7 +83,7 @@ function ReSpec.EnsureLootSpecPopup()
         if self.anchorButton and not self._mouseWasDown then
             if IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton") then
                 self._mouseWasDown = true
-                if not MouseIsOver(self) and not MouseIsOver(self.anchorButton) then
+                if not self:IsMouseOver() and not self.anchorButton:IsMouseOver() then
                     ReSpec.HideLootSpecPopup()
                 end
             end

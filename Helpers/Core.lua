@@ -104,11 +104,11 @@ function ReSpec.ShouldUseExpandedOpacity()
 end
 
 function ReSpec.IsMouseOverReSpecUI()
-    if S.widget and MouseIsOver(S.widget) then
+    if S.widget and S.widget:IsMouseOver() then
         return true
     end
 
-    if S.lootSpecPopup and S.lootSpecPopup:IsShown() and MouseIsOver(S.lootSpecPopup) then
+    if S.lootSpecPopup and S.lootSpecPopup:IsShown() and S.lootSpecPopup:IsMouseOver() then
         return true
     end
 
