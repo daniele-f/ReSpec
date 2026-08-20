@@ -796,6 +796,7 @@ local function BuildSettingsContent(panel, subtitle)
     local content = CreateFrame("Frame", nil, scrollFrame)
     content:SetWidth(700)
     content:SetHeight(1)
+    content.ScrollFrame = scrollFrame
 
     scrollFrame:SetScrollChild(content)
 
@@ -803,8 +804,26 @@ local function BuildSettingsContent(panel, subtitle)
     topAnchor:SetSize(1, 1)
     topAnchor:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 
-    local anchor = BuildBehaviorSection(content, topAnchor)
-    anchor = BuildAppearanceSection(content, anchor)
+    local currentSpec = ReSpec.GetSpecData(ReSpec.GetCurrentSpecIndex())
+    local specName = currentSpec and currentSpec.name
+    local hasSelectedSpec = type(specName) == "string" and specName:match("%S") ~= nil
+
+    if panel.ResetButton then
+        panel.ResetButton:SetShown(hasSelectedSpec)
+    end
+
+    if not hasSelectedSpec then
+        local emptyStateMessage = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
+        emptyStateMessage:SetPoint("TOPLEFT", topAnchor, "BOTTOMLEFT", ROW_INDENT, -SECTION_SPACING)
+        emptyStateMessage:SetWidth(620)
+        emptyStateMessage:SetJustifyH("LEFT")
+        emptyStateMessage:SetText("No specialization selected.\n\nOpen the Talents panel and select a specialization\nto configure ReSpec.")
+        emptyStateMessage:SetTextColor(0.8, 0.8, 0.8)
+        content.EmptyStateMessage = emptyStateMessage
+    else
+        local anchor = BuildBehaviorSection(content, topAnchor)
+        anchor = BuildAppearanceSection(content, anchor)
+    end
 
     return content
 end
@@ -813,6 +832,10 @@ local function RebuildSettingsContent()
     settingsRows = {}
 
     if settingsContentRoot then
+        if settingsContentRoot.ScrollFrame then
+            settingsContentRoot.ScrollFrame:Hide()
+            settingsContentRoot.ScrollFrame:SetParent(nil)
+        end
         settingsContentRoot:Hide()
         settingsContentRoot:SetParent(nil)
         settingsContentRoot = nil
@@ -862,6 +885,10 @@ local function CreateSettingsPanel()
     settingsSubtitle = subtitle
     settingsContentRoot = BuildSettingsContent(panel, subtitle)
 
+    panel:SetScript("OnShow", function()
+        RebuildSettingsContent()
+    end)
+
     panel.ResetButton:SetScript("OnClick", function()
         StaticPopup_Show("RESPEC_CONFIRM_RESET")
     end)
@@ -891,4 +918,14 @@ end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_LOGIN")
-f:SetScript("OnEvent", RegisterSettings)
+f:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+f:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_LOGIN" then
+        RegisterSettings()
+        return
+    end
+
+    if settingsPanel then
+        RebuildSettingsContent()
+    end
+end)
